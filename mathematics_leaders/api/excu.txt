@@ -1,0 +1,7 @@
+cd ~/frappe-bench/apps/mathematics_leaders/frontend
+npm run build -- --base=/assets/math-leaders-games/
+rsync -av --delete dist/ ~/frappe-bench/sites/assets/math-leaders-games/
+cp dist/index.html ~/frappe-bench/apps/mathematics_leaders/mathematics_leaders/www/math-leaders-games.html
+bench --site testapp.speedym.com clear-website-cache
+bench restart
+bench build --app mathematics_leaders

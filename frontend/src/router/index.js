@@ -1,11 +1,14 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import Index from '@/components/Index.vue'
-import Login from '@/components/Index.vue' // أو صفحة Login إن عندك واحدة منفصلة
+import Login from '@/components/Index.vue'
+import Home from '@/components/Dashboard.vue'
 
-export default createRouter({
-  history: createWebHashHistory('/assets/math-leaders-games/'),
+const router = createRouter({
+  history: createWebHashHistory('/math-leaders-games/'),
   routes: [
-    { path: '/', component: Index },
+    { path: '/', redirect: '/login' },
     { path: '/login', component: Login },
+    { path: '/home', component: Home },
   ],
 })
+
+export default router
