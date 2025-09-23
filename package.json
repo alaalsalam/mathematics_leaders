@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "name": "mathematics_leaders",
+  "description": "Vue games platform inside Frappe",
+  "scripts": {
+    "postinstall": "cd frontend && yarn install --check-files",
+    "dev": "cd frontend && yarn dev",
+    "build": "cd frontend && yarn build"
+  },
+  "dependencies": {}
+}

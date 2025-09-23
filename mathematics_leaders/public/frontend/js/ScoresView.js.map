@@ -1,0 +1,1 @@
+{"version":3,"file":"ScoresView.js","sources":["../../../../frontend/src/pages/other/ScoresView.vue"],"sourcesContent":["<script setup>\nimport Dashboard from '@/components/Dashboard.vue'\n</script>\n\n<template>\n  <Dashboard view=\"scores\" />\n</template>\nVuRLfS6y8qIVW1B25\n"],"names":["_createBlock","Dashboard"],"mappings":"8HAKEA,EAA2BC,EAAA,CAAhB,KAAK,SAAQ"}

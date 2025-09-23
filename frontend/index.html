@@ -1,13 +1,29 @@
-<!DOCTYPE html>
-<html lang="">
+<!doctype html>
+<html lang="ar" dir="rtl">
   <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="icon" href="/favicon.png" />
     <title>Mathematics Leaders</title>
+    <meta name="description" content="منصّة ألعاب رياضيات مبنية بــ Vue 3" />
   </head>
   <body>
+    <noscript>
+      <strong>هذا التطبيق يتطلب JavaScript للعمل.</strong>
+    </noscript>
+
     <div id="app"></div>
+
+    <!-- قيم Frappe (تعمل عند نسخ الملف إلى www ليُمرَّر عبر Jinja) -->
+    <script>
+      window.csrf_token = "{{ csrf_token }}"
+      if (!window.frappe) window.frappe = {}
+      frappe.boot = "{{ boot }}"
+    </script>
+
+    <!-- نقطة الدخول أثناء التطوير عبر Vite -->
     <script type="module" src="/src/main.js"></script>
+    <!-- في الإنتاج: ستُحقن ملفات البناء تلقائيًا أو اربط الباندل من /assets في صفحة www -->
   </body>
 </html>
