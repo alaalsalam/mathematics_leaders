@@ -1,0 +1,158 @@
+:where(.challenge-surface){
+  position:relative;
+  padding:clamp(16px,2vw,28px);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(200,160,59,0.18), transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.97), rgba(247,240,226,0.95));
+  border:1px solid rgba(15,138,62,0.12);
+  box-shadow:0 24px 48px rgba(15,138,62,0.12);
+  min-height:100%;
+  isolation:isolate;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+:where(.challenge-surface[data-theme="dark"]){
+  background:
+    radial-gradient(circle at 18% 12%, rgba(200,160,59,0.3), transparent 55%),
+    linear-gradient(180deg, rgba(15,23,24,0.96), rgba(12,18,20,0.94));
+  border-color:rgba(200,160,59,0.2);
+  box-shadow:0 28px 60px rgba(0,0,0,0.55);
+}
+:where(.challenge-surface)::before{
+  content:"";
+  position:absolute;
+  inset:-30%;
+  background:radial-gradient(circle at 30% 20%, rgba(15,138,62,0.18), transparent 60%);
+  opacity:.55;
+  pointer-events:none;
+  transition:opacity .4s ease;
+  z-index:0;
+}
+:where(.challenge-surface)::after{
+  content:"";
+  position:absolute;
+  inset:auto -30% -45% -30%;
+  height:70%;
+  background:linear-gradient(120deg, rgba(200,160,59,0.28), rgba(15,138,62,0.22), transparent);
+  filter:blur(0);
+  opacity:.4;
+  animation:challengeGlow 14s ease-in-out infinite alternate;
+  pointer-events:none;
+  z-index:0;
+}
+:where(.challenge-surface) > *{position:relative;z-index:1}
+:where(.challenge-surface:hover)::before{opacity:.7}
+
+:where(.challenge-surface) button{
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+:where(.challenge-surface) button:hover:not(:disabled){
+  transform:translateY(-1px);
+}
+:where(.challenge-surface) button:active:not(:disabled){
+  transform:translateY(0);
+}
+:where(.challenge-surface) button:focus-visible{
+  outline:2px solid rgba(200,160,59,0.65);
+  outline-offset:2px;
+}
+:where(.challenge-surface) button::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at center, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 65%);
+  transform:scale(0);
+  opacity:0;
+  transition:transform .45s ease, opacity .6s ease;
+  pointer-events:none;
+}
+:where(.challenge-surface) button:active::after{
+  transform:scale(1.75);
+  opacity:1;
+}
+
+:where(.challenge-surface) [draggable="true"]{
+  cursor:grab;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+:where(.challenge-surface) [draggable="true"]:active{
+  cursor:grabbing;
+  transform:scale(1.05);
+}
+
+:where(.challenge-surface) .overlay{
+  backdrop-filter:blur(18px);
+  animation:challengeOverlay .28s ease;
+}
+:where(.challenge-surface) .overlay .sheet,
+:where(.challenge-surface) .overlay .card{
+  border-radius:20px;
+  background:linear-gradient(145deg, rgba(255,255,255,0.94), rgba(248,239,218,0.92));
+  border:1px solid rgba(200,160,59,0.2);
+  box-shadow:0 22px 44px rgba(0,0,0,0.18);
+}
+:where(.challenge-surface[data-theme="dark"]) .overlay .sheet,
+:where(.challenge-surface[data-theme="dark"]) .overlay .card{
+  background:linear-gradient(145deg, rgba(22,24,28,0.95), rgba(29,32,36,0.92));
+  border-color:rgba(200,160,59,0.22);
+  box-shadow:0 24px 52px rgba(0,0,0,0.48);
+}
+
+:where(.challenge-surface) .toast{
+  transition:transform .2s ease, box-shadow .2s ease;
+  box-shadow:0 14px 28px rgba(15,138,62,0.18);
+}
+:where(.challenge-surface) .toast:hover{
+  transform:translateY(-2px);
+}
+:where(.challenge-surface) .toast.warn{
+  animation:challengeShake .42s ease;
+}
+
+:where(.challenge-surface) .slot,
+:where(.challenge-surface) .dropzone,
+:where(.challenge-surface) .cell{
+  transition:box-shadow .2s ease, transform .2s ease;
+}
+:where(.challenge-surface) .slot:hover,
+:where(.challenge-surface) .dropzone:hover,
+:where(.challenge-surface) .cell:hover{
+  box-shadow:0 10px 24px rgba(15,138,62,0.12);
+  transform:translateY(-1px);
+}
+
+@keyframes challengeGlow{
+  0%{transform:translateX(-6%) rotate(3deg);}
+  100%{transform:translateX(6%) rotate(-3deg);}
+}
+@keyframes challengeOverlay{
+  0%{opacity:0;transform:scale(0.96);}
+  100%{opacity:1;transform:scale(1);}
+}
+
+@keyframes challengeShake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-3px);}
+  40%{transform:translateX(3px);}
+  60%{transform:translateX(-2px);}
+  80%{transform:translateX(2px);}
+}
+
+:where(.challenge-surface) .fade-enter-active,
+:where(.challenge-surface) .fade-leave-active{transition:opacity .24s ease,transform .24s ease;}
+:where(.challenge-surface) .fade-enter-from,
+:where(.challenge-surface) .fade-leave-to{opacity:0;transform:translateY(6px);}
+
+@media (max-width: 720px){
+  :where(.challenge-surface){
+    padding:18px;
+    border-radius:20px;
+  }
+}
+:where(.challenge-surface):has(.toast.warn){
+  animation:challengeShake .45s ease;
+}

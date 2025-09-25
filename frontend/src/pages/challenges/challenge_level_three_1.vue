@@ -176,7 +176,7 @@ watch(()=>props.lang,()=>{ if(toast.value) toast.value = null })
 </script>
 
 <template>
-  <div class="lvl3c1" :data-theme="props.theme">
+  <div class="lvl3c1 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ T[L].title }}</h2>
     <p class="rule">{{ T[L].rule }}</p>
     <p class="hint">{{ T[L].hint }}</p>

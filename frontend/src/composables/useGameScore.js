@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { emitToast } from '@/utils/toastBus'
 
 const score = ref(null)
 const rank = ref(null)
@@ -41,6 +42,7 @@ async function fetchScore(force = false) {
     lastUpdated.value = now
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err)
+    emitToast({ message: error.value, type: 'danger' })
   } finally {
     loading.value = false
   }

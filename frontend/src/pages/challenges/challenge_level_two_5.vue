@@ -41,6 +41,19 @@ const bank = ref([])              // أرقام السحب
 const answer = ref({ A:null, N:null })
 const toast = ref(null)
 const solved = ref(false)
+const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
+
+function formatDigit(value){
+  const str = String(value)
+  return props.lang==='ar' ? str.replace(/[0-9]/g, d => digitsMap[Number(d)]) : str
+}
+
+const ruleText = computed(() => {
+  if(L.value === 'ar'){
+    return `ضع عددًا كليًا في كل مربع لتصبح المعادلة صحيحة:  ${formatDigit(target.value.num)}/${formatDigit(target.value.den)} =  ١/□  −  □/${formatDigit(target.value.d2)}.`
+  }
+  return `Place integers to make the equation true:  ${target.value.num}/${target.value.den} =  1/□  −  □/${target.value.d2}.`
+})
 
 function gcd(a,b){ return b?gcd(b,a%b):Math.abs(a) }
 function simplify(n,d){ const g=gcd(n,d); return [n/g, d/g] }
@@ -93,9 +106,14 @@ function clearCell(key){ answer.value[key]=null }
 function isFilled(){ return answer.value.A!=null && answer.value.N!=null }
 function isCorrect(){
   if(!isFilled()) return false
-  const lhs = 1/answer.value.A - answer.value.N/target.value.d2
-  const rhs = target.value.num/target.value.den
-  return Math.abs(lhs - rhs) < 1e-9
+  const AVal = answer.value.A
+  const NVal = answer.value.N
+  if(!AVal || !NVal) return false
+  const lhsNum = target.value.d2 - (AVal * NVal)
+  const lhsDen = AVal * target.value.d2
+  const rhsNum = target.value.num
+  const rhsDen = target.value.den
+  return lhsNum * rhsDen === rhsNum * lhsDen
 }
 
 async function addPoint(){
@@ -115,16 +133,16 @@ onMounted(newPuzzle)
 </script>
 
 <template>
-  <div class="lvl2c5" :data-theme="props.theme">
+  <div class="lvl2c5 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ T[L].title }}</h2>
-    <p class="rule">{{ T[L].rule(target) }}</p>
+    <p class="rule">{{ ruleText }}</p>
 
     <!-- المعادلة -->
     <div class="equation" dir="ltr">
       <div class="frac">
-        <div class="top">{{ target.num }}</div>
+        <div class="top">{{ formatDigit(target.num) }}</div>
         <div class="bar"></div>
-        <div class="bot">{{ target.den }}</div>
+        <div class="bot">{{ formatDigit(target.den) }}</div>
       </div>
       <span class="eq">=</span>
 
@@ -133,7 +151,7 @@ onMounted(newPuzzle)
         <div class="bar"></div>
         <div class="bot">
           <div class="drop" @dragover="allowDrop" @drop="dropTo('A', $event)">
-            <span v-if="answer.A!=null" class="num">{{ answer.A }}</span>
+            <span v-if="answer.A!=null" class="num">{{ formatDigit(answer.A) }}</span>
             <span v-else class="placeholder">□</span>
           </div>
         </div>
@@ -144,12 +162,12 @@ onMounted(newPuzzle)
       <div class="frac">
         <div class="top">
           <div class="drop" @dragover="allowDrop" @drop="dropTo('N', $event)">
-            <span v-if="answer.N!=null" class="num">{{ answer.N }}</span>
+            <span v-if="answer.N!=null" class="num">{{ formatDigit(answer.N) }}</span>
             <span v-else class="placeholder">□</span>
           </div>
         </div>
         <div class="bar"></div>
-        <div class="bot">{{ target.d2 }}</div>
+        <div class="bot">{{ formatDigit(target.d2) }}</div>
       </div>
     </div>
 
@@ -158,7 +176,7 @@ onMounted(newPuzzle)
       <div class="bank-title">{{ T[L].bank }}</div>
       <div class="bank-items">
         <button v-for="v in bank" :key="v" class="chip" draggable="true" @dragstart="onDragStart($event, v)">
-          {{ v }}
+          {{ formatDigit(v) }}
         </button>
       </div>
     </div>

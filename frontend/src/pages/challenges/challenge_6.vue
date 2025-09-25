@@ -97,7 +97,7 @@ onMounted(newPuzzle)
 </script>
 
 <template>
-  <div class="challenge6" :data-theme="props.theme">
+  <div class="challenge6 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ T[L].title }}</h2>
     <p class="rule">{{ T[L].rule(n, target) }}</p>
 

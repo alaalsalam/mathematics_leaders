@@ -106,6 +106,15 @@ const bankCounts = reactive({})
 const slotsMeta = ref([])
 const feedback = ref(null)
 const solved = ref(false)
+const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
+
+function formatDigit(value){
+  if(value == null) return ''
+  const str = String(value)
+  return props.lang==='ar'
+    ? str.replace(/[0-9]/g, d => digitsMap[Number(d)])
+    : str
+}
 
 function shuffle(arr){
   return arr.slice().sort(()=>Math.random()-0.5)
@@ -224,7 +233,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
 </script>
 
 <template>
-  <div class="lvl3c4" :data-theme="props.theme">
+  <div class="lvl3c4 challenge-surface" :data-theme="props.theme">
     <header class="head">
       <h2 class="title">{{ copy[L].title }}</h2>
       <p v-for="(line,idx) in copy[L].intro" :key="idx" class="intro">{{ line }}</p>
@@ -237,7 +246,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
             <template v-if="typeof token === 'string'">{{ token }}</template>
             <template v-else>
               <span class="slot" @dragover="allowDrop" @drop="onDrop($event, eq.id + '-' + token.slot)">
-                <span v-if="answers[eq.id + '-' + token.slot] != null" class="digit">{{ answers[eq.id + '-' + token.slot] }}</span>
+                <span v-if="answers[eq.id + '-' + token.slot] != null" class="digit">{{ formatDigit(answers[eq.id + '-' + token.slot]) }}</span>
                 <span v-else class="placeholder">●</span>
               </span>
               <button class="clear" @click="clearSlot(eq.id + '-' + token.slot)"><Eraser class="ic" /> {{ copy[L].clear }}</button>
@@ -257,7 +266,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
           draggable="true"
           @dragstart="onDragStart($event, item.value)"
         >
-          {{ item.value }}
+          {{ formatDigit(item.value) }}
         </button>
       </div>
     </section>

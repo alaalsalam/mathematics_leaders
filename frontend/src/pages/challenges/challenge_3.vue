@@ -153,7 +153,7 @@ watch(()=>props.lang,()=>{}) // لا شيء، فقط الحفاظ على توا�
 </script>
 
 <template>
-  <div class="challenge3" :data-theme="props.theme">
+  <div class="challenge3 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ T[L].title }}</h2>
     <p class="rule">{{ T[L].rule }}</p>
 

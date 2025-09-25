@@ -164,7 +164,7 @@ async function addPoint(){
 }
 
 async function checkLine(){
-  if(!selected.size){
+  if(!selected.value.size){
     feedback.value = copy[L.value].needSelection
     sWrong && sWrong.play()
     return
@@ -193,7 +193,7 @@ function isSolutionCell(r,c){
 </script>
 
 <template>
-  <div class="lvl3c3" :data-theme="props.theme">
+  <div class="lvl3c3 challenge-surface" :data-theme="props.theme">
     <header class="head">
       <h2 class="title">{{ copy[L].title }}</h2>
       <p class="rule">{{ copy[L].rule }}</p>

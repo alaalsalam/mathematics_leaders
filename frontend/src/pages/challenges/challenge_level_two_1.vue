@@ -148,7 +148,7 @@ onMounted(buildTarget)
 </script>
 
 <template>
-  <div class="lvl2c1" :data-theme="props.theme">
+  <div class="lvl2c1 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ T[L].title }}</h2>
     <p class="rule">{{ T[L].rule(target) }}</p>
 

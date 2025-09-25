@@ -1,2 +1,2 @@
-import{D as e}from"./platform.js";import{p as t,o}from"./vue.js";const p={__name:"SettingsView",setup(r){return(s,a)=>(o(),t(e,{view:"settings"}))}};export{p as default};
+import{D as e}from"./platform.js";import{s as t,o as s}from"./vue.js";const _={__name:"SettingsView",setup(o){return(r,a)=>(s(),t(e,{view:"settings"}))}};export{_ as default};
 //# sourceMappingURL=SettingsView.js.map

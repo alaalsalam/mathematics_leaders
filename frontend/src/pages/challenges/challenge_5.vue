@@ -29,6 +29,8 @@ sOK && (sOK.preload = 'auto')
 sClap && (sClap.preload = 'auto')
 sWrong && (sWrong.preload = 'auto')
 
+const EXTRA_CHOICES = 4
+
 // utils
 function rndInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
 function shuffle(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]]} return x }
@@ -38,6 +40,7 @@ const circles = ref([2,3,4])         // [top, left, right]
 const squares = ref({ t:0, l:0, r:0 }) // edge squares: top edge between left-right? define: t=top (left-right base), l=left (top-left), r=right (top-right)
 const blanks = ref(new Set())        // which of ['t','l','r'] are blank
 const answerMap = ref({})            // key -> value
+const manualDrafts = ref({})         // key -> manual string
 const bankCounts = ref({})           // value -> remaining copies
 const solved = ref(false)
 const toast = ref(null)
@@ -72,6 +75,25 @@ function rebuildBank(){
     counts[v]=(counts[v]||0)-1
   }
   for(const [v,ct] of Object.entries(counts)){ if(ct<=0) delete counts[v] }
+
+  // inject extra distractor values to broaden the number bank
+  const neededExtras = EXTRA_CHOICES
+  if (neededExtras > 0) {
+    const usedValues = new Set(Object.keys(counts).map(Number))
+    const answerValues = new Set(Object.values(squares.value))
+    const pool = []
+    for (let value = 4; value <= 81; value++) {
+      if (!usedValues.has(value) && !answerValues.has(value)) {
+        pool.push(value)
+      }
+    }
+    for (let i = 0; i < neededExtras && pool.length; i++) {
+      const idx = Math.floor(Math.random() * pool.length)
+      const candidate = pool.splice(idx, 1)[0]
+      counts[candidate] = (counts[candidate] || 0) + 1
+    }
+  }
+
   bankCounts.value = counts
 }
 
@@ -84,7 +106,7 @@ const bankList = computed(()=>{
 })
 
 function newPuzzle(){
-  solved.value=false; toast.value=null; answerMap.value={}
+  solved.value=false; toast.value=null; answerMap.value={}; manualDrafts.value={}
   buildTriangle()
   pickBlanks()
   rebuildBank()
@@ -119,17 +141,29 @@ function resetAll(){
 // drag & drop
 function onDragStart(ev,value){ ev.dataTransfer.setData('text/plain', String(value)) }
 function allowDrop(ev){ ev.preventDefault() }
-function onDrop(ev,key){
-  ev.preventDefault()
-  const v = Number(ev.dataTransfer.getData('text/plain'))
+function setAnswer(key, value, { fromManual = false } = {}){
+  if(Number.isNaN(value)) return
   if(answerMap.value[key]!=null){
     const old=answerMap.value[key]
     bankCounts.value[old]=(bankCounts.value[old]||0)+1
   }
-  if((bankCounts.value[v]||0)===0) return
-  bankCounts.value[v]-=1
-  answerMap.value[key]=v
+  if(fromManual){
+    if((bankCounts.value[value]||0)>0){
+      bankCounts.value[value]-=1
+    }
+  } else {
+    if((bankCounts.value[value]||0)===0) return
+    bankCounts.value[value]-=1
+  }
+  answerMap.value[key]=value
+  manualDrafts.value = { ...manualDrafts.value, [key]: String(value) }
   toast.value=null
+}
+
+function onDrop(ev,key){
+  ev.preventDefault()
+  const v = Number(ev.dataTransfer.getData('text/plain'))
+  setAnswer(key, v)
 }
 function clearCell(key){
   if(answerMap.value[key]!=null){
@@ -137,6 +171,22 @@ function clearCell(key){
     bankCounts.value[old]=(bankCounts.value[old]||0)+1
     delete answerMap.value[key]
   }
+  manualDrafts.value = { ...manualDrafts.value, [key]: '' }
+}
+
+function onManualInput(key, value){
+  manualDrafts.value = { ...manualDrafts.value, [key]: value }
+}
+
+function commitManual(key){
+  const raw = (manualDrafts.value[key] ?? '').trim()
+  if(raw === ''){
+    clearCell(key)
+    return
+  }
+  const num = Number(raw)
+  if(!Number.isFinite(num)) return
+  setAnswer(key, num, { fromManual: true })
 }
 
 const numDir = computed(()=>({direction:'ltr', unicodeBidi:'isolate'}))
@@ -145,7 +195,7 @@ watch(()=>props.lang,()=>{})
 </script>
 
 <template>
-  <div class="challenge5" :data-theme="props.theme">
+  <div class="challenge5 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ T[L].title }}</h2>
     <p class="rule">{{ T[L].rule }}</p>
 
@@ -174,6 +224,15 @@ watch(()=>props.lang,()=>{})
             <span v-if="answerMap['l']!=null" class="num" :style="numDir">{{ answerMap['l'] }}</span>
             <span v-else class="placeholder">؟</span>
           </div>
+          <input
+            class="manual-entry"
+            type="number"
+            :value="manualDrafts['l'] ?? ''"
+            @input="onManualInput('l', $event.target.value)"
+            @change="commitManual('l')"
+            @blur="commitManual('l')"
+            :placeholder="props.lang==='ar' ? 'أدخل رقمًا' : 'Enter value'"
+          />
           <button class="clear" @click="clearCell('l')"><Eraser class="ic"/> {{ T[L].clear }}</button>
         </template>
       </div>
@@ -188,6 +247,15 @@ watch(()=>props.lang,()=>{})
             <span v-if="answerMap['r']!=null" class="num" :style="numDir">{{ answerMap['r'] }}</span>
             <span v-else class="placeholder">؟</span>
           </div>
+          <input
+            class="manual-entry"
+            type="number"
+            :value="manualDrafts['r'] ?? ''"
+            @input="onManualInput('r', $event.target.value)"
+            @change="commitManual('r')"
+            @blur="commitManual('r')"
+            :placeholder="props.lang==='ar' ? 'أدخل رقمًا' : 'Enter value'"
+          />
           <button class="clear" @click="clearCell('r')"><Eraser class="ic"/> {{ T[L].clear }}</button>
         </template>
       </div>
@@ -202,6 +270,15 @@ watch(()=>props.lang,()=>{})
             <span v-if="answerMap['t']!=null" class="num" :style="numDir">{{ answerMap['t'] }}</span>
             <span v-else class="placeholder">؟</span>
           </div>
+          <input
+            class="manual-entry"
+            type="number"
+            :value="manualDrafts['t'] ?? ''"
+            @input="onManualInput('t', $event.target.value)"
+            @change="commitManual('t')"
+            @blur="commitManual('t')"
+            :placeholder="props.lang==='ar' ? 'أدخل رقمًا' : 'Enter value'"
+          />
           <button class="clear" @click="clearCell('t')"><Eraser class="ic"/> {{ T[L].clear }}</button>
         </template>
       </div>
@@ -280,6 +357,9 @@ watch(()=>props.lang,()=>{})
 .num{ font-variant-numeric:tabular-nums; font-weight:700; font-size:1.15rem }
 .placeholder{ color:var(--muted); font-size:1.15rem }
 .dropzone{ width:100%; flex:1; display:flex; align-items:center; justify-content:center; }
+.manual-entry{ width:100%; padding:.4rem .55rem; border-radius:.6rem; border:1px solid rgba(99,102,241,.2); background:rgba(255,255,255,.92); font-size:.95rem; direction:ltr; color:var(--fg); }
+.manual-entry:focus{ outline:none; border-color:rgba(15,138,62,.45); box-shadow:0 0 0 3px rgba(15,138,62,.16); }
+[data-theme="dark"] .manual-entry{ background:rgba(15,23,42,.8); border-color:rgba(148,163,184,.25); color:var(--fg); }
 .clear{ font-size:.75rem; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; gap:.25rem; cursor:pointer }
 
 /* البنك */
@@ -299,4 +379,3 @@ watch(()=>props.lang,()=>{})
 .card{ background:var(--bg); color:var(--fg); padding:1rem 1.25rem; border-radius:1rem; box-shadow:0 10px 30px rgba(0,0,0,.25); display:flex; flex-direction:column; gap:.75rem; align-items:center }
 .big{ font-size:1.25rem; font-weight:700 }
 </style>
-

@@ -1,2 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap');
+
 @import "tailwindcss";
-/* يمكنك إضافة ملفاتك أو طبقاتك لاحقًا إن رغبت */
+@import "../styles/design-tokens.css";
+@import "../styles/challenge-surfaces.css";
+
+* {
+  font-family: var(--font-body);
+}
+
+body {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-900);
+  min-height: 100vh;
+}
+
+[data-ripple]{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+[data-ripple]::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at center, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 65%);
+  transform:scale(0);
+  opacity:0;
+  transition:transform .45s ease, opacity .6s ease;
+  pointer-events:none;
+}
+[data-ripple]:active::after{
+  transform:scale(1.6);
+  opacity:1;
+}

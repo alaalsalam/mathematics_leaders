@@ -86,6 +86,13 @@ const bankCounts = reactive({})
 const feedback = ref(null)
 const solved = ref(false)
 const digitsPool = ['1','2','3','4','5','6','7','8','9']
+const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
+
+function formatDigit(value){
+  if(value == null) return ''
+  const str = String(value)
+  return props.lang==='ar' ? str.replace(/[0-9]/g, d => digitsMap[Number(d)]) : str
+}
 
 function resetMaps(){
   Object.keys(placements).forEach(k => delete placements[k])
@@ -216,7 +223,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
 </script>
 
 <template>
-  <div class="lvl3c5" :data-theme="props.theme">
+  <div class="lvl3c5 challenge-surface" :data-theme="props.theme">
     <header class="head">
       <h2 class="title">{{ copy[L].title }}</h2>
       <p v-for="(line, idx) in copy[L].intro" :key="idx" class="intro">{{ line }}</p>
@@ -226,14 +233,14 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
       <div class="fraction">
         <div class="row">
           <div v-for="key in slotTemplate.n1" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
-            <span v-if="placements[key]" class="digit">{{ placements[key] }}</span>
+            <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
         </div>
         <div class="bar"></div>
         <div class="row">
           <div v-for="key in slotTemplate.d1" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
-            <span v-if="placements[key]" class="digit">{{ placements[key] }}</span>
+            <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
         </div>
@@ -244,14 +251,14 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
       <div class="fraction">
         <div class="row">
           <div v-for="key in slotTemplate.n2" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
-            <span v-if="placements[key]" class="digit">{{ placements[key] }}</span>
+            <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
         </div>
         <div class="bar"></div>
         <div class="row">
           <div v-for="key in slotTemplate.d2" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
-            <span v-if="placements[key]" class="digit">{{ placements[key] }}</span>
+            <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
         </div>
@@ -260,7 +267,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
       <span class="op">=</span>
 
       <div class="target-slot" @dragover="allowDrop" @drop="onDrop($event, 'res')">
-        <span v-if="placements.res" class="digit">{{ placements.res }}</span>
+        <span v-if="placements.res" class="digit">{{ formatDigit(placements.res) }}</span>
         <span v-else class="placeholder">?</span>
       </div>
     </section>
@@ -281,7 +288,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
           draggable="true"
           @dragstart="onDragStart($event, item.digit)"
         >
-          {{ item.digit }}
+          {{ formatDigit(item.digit) }}
         </button>
       </div>
     </section>

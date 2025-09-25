@@ -5,4 +5,3 @@ import Dashboard from '@/components/Dashboard.vue'
 <template>
   <Dashboard view="scores" />
 </template>
-VuRLfS6y8qIVW1B25

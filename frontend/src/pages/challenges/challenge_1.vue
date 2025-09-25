@@ -148,7 +148,7 @@ onMounted(()=> newPuzzle())
 </script>
 
 <template>
-  <section class="wrap" :dir="dir" :data-theme="theme">
+  <section class="wrap challenge-surface" :dir="dir" :data-theme="theme">
     <header class="hdr">
       <h2>{{ t('title') }}</h2>
       <p class="sub">{{ t('subtitle') }}</p>

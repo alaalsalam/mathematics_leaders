@@ -47,6 +47,7 @@ const base = ref(0)
 const grid = ref([])            // القيم الصحيحة
 const blanks = ref(new Set())   // "r,c"
 const answerMap = ref({})       // "r,c" -> value
+const manualDrafts = ref({})    // "r,c" -> string for manual input
 const bankCounts = ref({})      // value -> remaining count
 const solved = ref(false)
 const toast = ref(null)
@@ -93,7 +94,7 @@ const bankList = computed(()=>{
 })
 
 function newPuzzle(){
-  solved.value=false; toast.value=null; answerMap.value={}
+  solved.value=false; toast.value=null; answerMap.value={}; manualDrafts.value={}
   // اختيار step وقاعدة
   step.value = stepsPool[rndInt(0, stepsPool.length-1)]
   // اختيار base
@@ -129,26 +130,39 @@ async function checkNow(){
 
 function resetAnswers(){
   answerMap.value={}
+  manualDrafts.value={}
   buildBankCounts()
   toast.value=null; solved.value=false
 }
 
 // سحب وإفلات بكميّات
+function setAnswer(key, value, { fromManual = false } = {}){
+  if(Number.isNaN(value)) return
+  if(answerMap.value[key]!=null){
+    const old=answerMap.value[key]
+    bankCounts.value[old]=(bankCounts.value[old]||0)+1
+  }
+  if(fromManual){
+    if((bankCounts.value[value]||0)>0){
+      bankCounts.value[value]-=1
+    }
+  } else {
+    if((bankCounts.value[value]||0)===0){
+      return
+    }
+    bankCounts.value[value]-=1
+  }
+  answerMap.value[key]=value
+  manualDrafts.value = { ...manualDrafts.value, [key]: String(value) }
+  toast.value=null
+}
+
 function onDragStart(ev,value){ ev.dataTransfer.setData('text/plain', String(value)) }
 function allowDrop(ev){ ev.preventDefault() }
 function onDrop(ev,key){
   ev.preventDefault()
   const v=Number(ev.dataTransfer.getData('text/plain'))
-  // إعادة المخزون لقيمة كانت في الخلية
-  if(answerMap.value[key]!=null){
-    const old=answerMap.value[key]
-    bankCounts.value[old]=(bankCounts.value[old]||0)+1
-  }
-  // استهلاك من البنك إن متوفر
-  if((bankCounts.value[v]||0)===0){ return } // لا توجد قطع متاحة
-  bankCounts.value[v]-=1
-  answerMap.value[key]=v
-  toast.value=null
+  setAnswer(key, v)
 }
 function clearCell(key){
   if(answerMap.value[key]!=null){
@@ -156,6 +170,22 @@ function clearCell(key){
     bankCounts.value[old]=(bankCounts.value[old]||0)+1
     delete answerMap.value[key]
   }
+  manualDrafts.value = { ...manualDrafts.value, [key]: '' }
+}
+
+function onManualInput(key, value){
+  manualDrafts.value = { ...manualDrafts.value, [key]: value }
+}
+
+function commitManual(key){
+  const raw = (manualDrafts.value[key] ?? '').trim()
+  if(raw === ''){
+    clearCell(key)
+    return
+  }
+  const num = Number(raw)
+  if(!Number.isFinite(num)) return
+  setAnswer(key, num, { fromManual: true })
 }
 
 const numDir = computed(()=>({direction:'ltr', unicodeBidi:'isolate'}))
@@ -164,7 +194,7 @@ watch(()=>props.lang,()=>toast.value=null)
 </script>
 
 <template>
-  <div class="challenge2" :data-theme="props.theme">
+  <div class="challenge2 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ titleText }}</h2>
     <p class="rule">{{ ruleText }}</p>
 
@@ -182,6 +212,15 @@ watch(()=>props.lang,()=>toast.value=null)
                 </span>
                 <span v-else class="placeholder">؟</span>
               </div>
+              <input
+                class="manual-entry"
+                type="number"
+                :value="manualDrafts[`${r-1},${c-1}`] ?? ''"
+                @input="onManualInput(`${r-1},${c-1}`, $event.target.value)"
+                @change="commitManual(`${r-1},${c-1}`)"
+                @blur="commitManual(`${r-1},${c-1}`)"
+                :placeholder="props.lang==='ar' ? 'أدخل رقمًا' : 'Enter value'"
+              />
               <button class="clear" @click="clearCell(`${r-1},${c-1}`)"><Eraser class="ic" /> {{ T[L].clear }}</button>
             </template>
           </div>
@@ -228,6 +267,9 @@ watch(()=>props.lang,()=>toast.value=null)
 .num{ font-variant-numeric:tabular-nums; font-weight:700; font-size:1.25rem }
 .placeholder{ color:var(--muted); font-size:1.25rem }
 .dropzone{ width:100%; flex:1; display:flex; align-items:center; justify-content:center; background:rgba(99,102,241,.06); border-radius:.5rem }
+.manual-entry{ width:100%; padding:.45rem .6rem; border-radius:.6rem; border:1px solid rgba(99,102,241,.2); background:rgba(255,255,255,.92); font-size:.95rem; direction:ltr; color:var(--fg); }
+.manual-entry:focus{ outline:none; border-color:rgba(15,138,62,.45); box-shadow:0 0 0 3px rgba(15,138,62,.16); }
+[data-theme="dark"] .manual-entry{ background:rgba(15,23,42,.8); border-color:rgba(148,163,184,.25); color:var(--fg); }
 .clear{ font-size:.75rem; border:none; background:transparent; color:var(--muted); display:flex; align-items:center; gap:.25rem; cursor:pointer }
 .bank{ display:flex; flex-direction:column; gap:.75rem }
 .bank-title{ font-weight:600; color:var(--muted) }

@@ -203,7 +203,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
 </script>
 
 <template>
-  <div class="lvl3c8" :data-theme="props.theme">
+  <div class="lvl3c8 challenge-surface" :data-theme="props.theme">
     <header class="head">
       <h2 class="title">{{ copy[L].title }}</h2>
       <p class="intro">{{ copy[L].intro }}</p>

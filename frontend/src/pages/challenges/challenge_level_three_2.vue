@@ -2,25 +2,29 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { Check, RotateCcw, RefreshCw, Eraser } from 'lucide-vue-next'
 
-const props = defineProps({ lang:{type:String,default:'ar'}, theme:{type:String,default:'light'} })
+const props = defineProps({ lang:{ type:String, default:'ar' }, theme:{ type:String, default:'light' } })
 
 const copy = {
   ar:{
     title:'المستوى الثالث – التحدي 2: الأرقام المفقودة على البطاقات',
-    rule:'أمامك بطاقات ملوّنة بأرقام مفقودة. استخدم المعلومات المعطاة (المجموع، المتوسط، الوسيط، المدى) لتحديد الرقم المناسب لكل بطاقة، ثم اسحبه من لوحة الأعداد وضعه في مكانه.',
+    rule:'أمامك بطاقات ملوّنة بأرقام مفقودة. استخدم المعلومات المعطاة (المجموع، المتوسط، الوسيط، المدى) لتحديد الرقم المناسب لكل بطاقة، ثم اسحبه من لوحة الأعداد أو اكتبه يدويًا.',
     bank:'لوحة الأعداد', newQ:'سؤال جديد', reset:'مسح', check:'تحقّق',
     correct:'أحسنت! الأرقام صحيحة.', wrong:'تحقّق من القيم مرة أخرى.', clear:'تفريغ البطاقة',
-    hints:{ sum:'المجموع', mean:'المتوسط الحسابي', median:'الوسيط', range:'المدى' }
+    hints:{ sum:'المجموع', mean:'المتوسط الحسابي', median:'الوسيط', range:'المدى' },
+    manualPlaceholder:'أدخل رقمًا'
   },
   en:{
     title:'Level 3 – Challenge 2: Missing numbers on the cards',
-    rule:'Each coloured card is missing its number. Use the given information (sum, mean, median, range) to deduce the correct value for every card, then drag the numbers from the bank to their spots.',
+    rule:'Each coloured card is missing its number. Use the given information (sum, mean, median, range) to deduce the correct value for every card, then drag a number from the bank or type it manually.',
     bank:'Number bank', newQ:'New puzzle', reset:'Clear', check:'Check',
     correct:'Great! All numbers are correct.', wrong:'Something is off – recheck the values.', clear:'Clear card',
-    hints:{ sum:'Sum', mean:'Mean', median:'Median', range:'Range' }
+    hints:{ sum:'Sum', mean:'Mean', median:'Median', range:'Range' },
+    manualPlaceholder:'Type value'
   }
 }
+
 const L = computed(() => (copy[props.lang] ? props.lang : 'ar'))
+const locale = computed(() => (props.lang === 'ar' ? 'ar-EG' : 'en-US'))
 
 /* ===== sounds ===== */
 import successUrl from '@/assets/sounds/success3.mp3'
@@ -41,6 +45,8 @@ const templates = [
   { numbers:[9,11,14,20,26] }
 ]
 
+const EXTRA_CHOICES = 4
+
 function computeHints(numbers){
   const sorted = numbers.slice().sort((a,b)=>a-b)
   const sum = sorted.reduce((acc,n)=>acc+n,0)
@@ -55,29 +61,32 @@ const cards = ref([])                 // [{id,color,value}]
 const solution = reactive({})         // id -> value
 const blanks = ref(new Set())         // ids
 const totalCounts = reactive({})      // value -> total copies (handles duplicates)
+const extraCounts = reactive({})      // distractor values counts
 const bankCounts = reactive({})       // value -> remaining copies
 const answer = reactive({})           // id -> chosen value
+const answerSource = reactive({})     // id -> 'bank' | 'manual'
+const manualDrafts = reactive({})     // id -> string
 const hints = ref({ sum:0, mean:0, median:0, range:0 })
 const toast = ref(null)
 const solved = ref(false)
 
-function resetReactiveMap(obj){
-  for (const key of Object.keys(obj)) delete obj[key]
-}
+function resetReactiveMap(obj){ for (const key of Object.keys(obj)) delete obj[key] }
 
 function buildPuzzle(){
   const tpl = templates[Math.floor(Math.random()*templates.length)]
   const nums = tpl.numbers.slice()
   const colours = colourPalette.slice(0, nums.length)
-  colours.sort(() => Math.random()-0.5)
-  const arrangement = nums.slice().sort(() => Math.random()-0.5)
+  colours.sort(() => Math.random() - 0.5)
+  const arrangement = nums.slice().sort(() => Math.random() - 0.5)
 
-  // reset containers
   cards.value = []
-  resetReactiveMap(solution)
   blanks.value = new Set()
+  resetReactiveMap(solution)
   resetReactiveMap(answer)
+  resetReactiveMap(answerSource)
+  resetReactiveMap(manualDrafts)
   resetReactiveMap(totalCounts)
+  resetReactiveMap(extraCounts)
   resetReactiveMap(bankCounts)
 
   arrangement.forEach((value, idx) => {
@@ -90,6 +99,22 @@ function buildPuzzle(){
   for (const [val, ct] of Object.entries(totalCounts)) {
     bankCounts[val] = ct
   }
+
+  const minVal = Math.min(...nums)
+  const maxVal = Math.max(...nums)
+  const lower = Math.max(1, minVal - 12)
+  const upper = maxVal + 12
+  const extras = new Set()
+  while(extras.size < EXTRA_CHOICES){
+    const candidate = Math.floor(Math.random() * (upper - lower + 1)) + lower
+    if(totalCounts[candidate]) continue
+    extras.add(candidate)
+  }
+  extras.forEach(val => {
+    extraCounts[val] = (extraCounts[val] || 0) + 1
+    bankCounts[val] = (bankCounts[val] || 0) + 1
+  })
+
   hints.value = computeHints(nums)
   toast.value = null
   solved.value = false
@@ -97,36 +122,49 @@ function buildPuzzle(){
 
 function onDragStart(ev, value){ ev.dataTransfer.setData('text/plain', String(value)) }
 function allowDrop(ev){ ev.preventDefault() }
+
+function setAnswer(cardId, value, source){
+  if(Number.isNaN(value)) return false
+  if(answer[cardId] != null && answerSource[cardId] === 'bank'){
+    const prev = answer[cardId]
+    bankCounts[prev] = (bankCounts[prev] || 0) + 1
+  }
+
+  if(source === 'bank'){
+    if((bankCounts[value] || 0) <= 0) return false
+    bankCounts[value] = (bankCounts[value] || 0) - 1
+  }
+
+  answer[cardId] = value
+  answerSource[cardId] = source
+  manualDrafts[cardId] = String(value)
+  toast.value = null
+  solved.value = false
+  return true
+}
+
 function onDrop(ev, cardId){
   ev.preventDefault()
   const raw = ev.dataTransfer.getData('text/plain')
   const val = Number(raw)
   if(Number.isNaN(val)) return
-  if((bankCounts[val] || 0) <= 0 && answer[cardId] !== val) return
-
-  if(answer[cardId] != null){
-    const prev = answer[cardId]
-    bankCounts[prev] = (bankCounts[prev] || 0) + 1
-  }
-
-  if(answer[cardId] !== val){
-    bankCounts[val] = (bankCounts[val] || 0) - 1
-  }
-  if(bankCounts[val] < 0) bankCounts[val] = 0
-
-  answer[cardId] = val
-  toast.value = null
+  setAnswer(cardId, val, 'bank')
 }
+
 function clearCard(cardId){
-  if(answer[cardId] != null){
+  if(answer[cardId] != null && answerSource[cardId] === 'bank'){
     const prev = answer[cardId]
     bankCounts[prev] = (bankCounts[prev] || 0) + 1
-    delete answer[cardId]
   }
+  delete answer[cardId]
+  delete answerSource[cardId]
+  manualDrafts[cardId] = ''
+  toast.value = null
+  solved.value = false
 }
 
 function isFilled(){
-  for(const id of blanks.value){ if(answer[id]==null) return false }
+  for(const id of blanks.value){ if(answer[id] == null) return false }
   return true
 }
 function isCorrect(){
@@ -148,15 +186,18 @@ async function checkNow(){
     toast.value = copy[L.value].correct
     sOK && sOK.play(); sClap && sClap.play()
     await addPoint()
-  }else{
+  } else {
     toast.value = copy[L.value].wrong
     sWrong && sWrong.play()
   }
 }
 function resetAll(){
   resetReactiveMap(answer)
+  resetReactiveMap(answerSource)
+  resetReactiveMap(manualDrafts)
   resetReactiveMap(bankCounts)
   for (const [val, ct] of Object.entries(totalCounts)) bankCounts[val] = ct
+  for (const [val, ct] of Object.entries(extraCounts)) bankCounts[val] = (bankCounts[val] || 0) + ct
   toast.value = null
   solved.value = false
 }
@@ -169,12 +210,31 @@ const bankList = computed(() => {
   return arr
 })
 
+function onManualInput(cardId, value){ manualDrafts[cardId] = value }
+function commitManual(cardId){
+  const raw = (manualDrafts[cardId] ?? '').trim()
+  if(raw === ''){ clearCard(cardId); return }
+  const num = Number(raw)
+  if(!Number.isFinite(num)) return
+  setAnswer(cardId, num, 'manual')
+}
+
+const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
+function formatDigit(value){
+  const str = String(value)
+  if(props.lang !== 'ar') return str
+  return str.replace(/[0-9]/g, d => digitsMap[Number(d)])
+}
+function formatNumber(value, options={}){
+  return new Intl.NumberFormat(locale.value, options).format(value)
+}
+
 onMounted(buildPuzzle)
 watch(() => props.lang, () => { if(toast.value && solved.value) return; toast.value = null })
 </script>
 
 <template>
-  <div class="lvl3c2" :data-theme="props.theme">
+  <div class="lvl3c2 challenge-surface" :data-theme="props.theme">
     <header class="head">
       <h2 class="title">{{ copy[L].title }}</h2>
       <p class="rule">{{ copy[L].rule }}</p>
@@ -189,9 +249,19 @@ watch(() => props.lang, () => { if(toast.value && solved.value) return; toast.va
           :class="'color-' + card.color"
         >
           <div class="drop" @dragover="allowDrop" @drop="onDrop($event, card.id)">
-            <span v-if="answer[card.id]!=null" class="num">{{ answer[card.id] }}</span>
+            <span v-if="answer[card.id] != null" class="num">{{ formatDigit(answer[card.id]) }}</span>
             <span v-else class="placeholder">؟</span>
           </div>
+          <input
+            class="manual-entry"
+            type="number"
+            inputmode="numeric"
+            :value="manualDrafts[card.id] ?? ''"
+            @input="onManualInput(card.id, $event.target.value)"
+            @change="commitManual(card.id)"
+            @blur="commitManual(card.id)"
+            :placeholder="copy[L].manualPlaceholder"
+          />
           <button class="clear" @click="clearCard(card.id)"><Eraser class="ic" /> {{ copy[L].clear }}</button>
         </div>
       </div>
@@ -199,10 +269,10 @@ watch(() => props.lang, () => { if(toast.value && solved.value) return; toast.va
       <aside class="facts">
         <h3>{{ props.lang==='ar' ? 'المعلومات المتاحة' : 'Given facts' }}</h3>
         <ul>
-          <li><strong>{{ copy[L].hints.sum }}:</strong> {{ hints.sum }}</li>
-          <li><strong>{{ copy[L].hints.mean }}:</strong> {{ hints.mean }}</li>
-          <li><strong>{{ copy[L].hints.median }}:</strong> {{ hints.median }}</li>
-          <li><strong>{{ copy[L].hints.range }}:</strong> {{ hints.range }}</li>
+          <li><strong>{{ copy[L].hints.sum }}:</strong> {{ formatNumber(hints.sum) }}</li>
+          <li><strong>{{ copy[L].hints.mean }}:</strong> {{ formatNumber(hints.mean, { maximumFractionDigits:2 }) }}</li>
+          <li><strong>{{ copy[L].hints.median }}:</strong> {{ formatNumber(hints.median) }}</li>
+          <li><strong>{{ copy[L].hints.range }}:</strong> {{ formatNumber(hints.range) }}</li>
         </ul>
       </aside>
     </section>
@@ -217,7 +287,7 @@ watch(() => props.lang, () => { if(toast.value && solved.value) return; toast.va
           draggable="true"
           @dragstart="onDragStart($event, item.value)"
         >
-          {{ item.value }}
+          {{ formatDigit(item.value) }}
         </button>
       </div>
     </section>
@@ -245,14 +315,17 @@ watch(() => props.lang, () => { if(toast.value && solved.value) return; toast.va
 
 .board{ display:flex; flex-wrap:wrap; gap:24px; margin-bottom:24px }
 .cards{ display:flex; flex-wrap:wrap; gap:16px; flex:2 }
-.card{ width:160px; min-height:140px; border-radius:18px; padding:16px; box-shadow:0 10px 24px rgba(0,0,0,.08);
-  display:flex; flex-direction:column; align-items:center; gap:12px; border:2px solid transparent; background:var(--panel) }
+.card{ width:170px; min-height:170px; border-radius:18px; padding:16px; box-shadow:0 10px 24px rgba(0,0,0,.08);
+  display:flex; flex-direction:column; align-items:stretch; gap:12px; border:2px solid transparent; background:var(--panel) }
 .card .drop{ width:100%; height:80px; border:2px dashed rgba(15,23,42,.25); border-radius:12px;
   display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:700; color:var(--fg);
   background:rgba(255,255,255,.55) }
 [data-theme="dark"] .card .drop{ background:rgba(15,23,42,.45); border-color:rgba(226,232,240,.25) }
 .card .drop:hover{ border-color:rgba(214,76,66,.45); box-shadow:0 0 0 4px rgba(214,76,66,.12) }
 .placeholder{ opacity:.45 }
+.manual-entry{ width:100%; padding:.45rem .6rem; border-radius:.6rem; border:1px solid rgba(148,163,184,.35); font-size:.95rem; background:rgba(255,255,255,.92); color:inherit; direction:ltr }
+.manual-entry:focus{ outline:none; border-color:rgba(15,138,62,.45); box-shadow:0 0 0 3px rgba(15,138,62,.16) }
+[data-theme="dark"] .manual-entry{ background:rgba(15,23,42,.8); border-color:rgba(148,163,184,.4); color:var(--fg) }
 .clear{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
   border:1px solid rgba(15,23,42,.15); background:rgba(255,255,255,.8); cursor:pointer; font-size:.8rem }
 [data-theme="dark"] .clear{ background:rgba(30,41,59,.6); border-color:rgba(148,163,184,.35) }

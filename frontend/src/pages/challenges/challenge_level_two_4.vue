@@ -108,7 +108,7 @@ watch(()=>props.lang,()=>{})
 </script>
 
 <template>
-  <div class="lvl2c4" :data-theme="props.theme">
+  <div class="lvl2c4 challenge-surface" :data-theme="props.theme">
     <h2 class="title">{{ T[L].title }}</h2>
     <p class="rule">{{ T[L].rule(S, D) }}</p>
 
