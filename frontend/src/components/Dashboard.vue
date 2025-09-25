@@ -1094,7 +1094,7 @@ const logoUrl = new URL('../assets/images/logo3.jpeg', import.meta.url).href
 
 .dashboard__main {
   position: relative;
-  z-index: 5;
+  /* z-index: 5; */
   display: flex;
   flex-direction: column;
   gap: clamp(24px, 4vw, 36px);
