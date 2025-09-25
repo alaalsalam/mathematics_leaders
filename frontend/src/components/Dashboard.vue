@@ -607,8 +607,14 @@ const logoUrl = new URL('../assets/images/logo3.jpeg', import.meta.url).href
               </transition>
             </div>
           </div>
-        </aside>
-
+       
+            <div class="logout-block">
+            <button type="button" class="logout-btn" @click="logout">
+              <LogOut />
+              <span>{{ T[lang].logout }}</span>
+            </button>
+          </div>
+ </aside>
         <div class="challenge-preview">
           <div class="preview-header">
             <span v-if="currentSelection.level" class="preview-pill">{{ currentSelection.level.label[lang] }}</span>
@@ -1643,6 +1649,16 @@ const logoUrl = new URL('../assets/images/logo3.jpeg', import.meta.url).href
   transform: rotateX(90deg);
   opacity: 0;
 }
+.logout-block{
+  margin: 12px; padding-top: 10px; border-top: 1px solid var(--border-color,#ddd);
+}
+.logout-btn{
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  background: transparent; border: 0; padding: 10px 8px; border-radius: 10px;
+  color: #b32020; font-weight: 700; cursor: pointer;
+}
+.logout-btn:hover{ background: rgba(179,32,32,.08); }
+.logout-btn svg{ width: 18px; height: 18px; }
 
 @keyframes spin {
   to {
