@@ -25,7 +25,6 @@ import challenge_level_three_3 from '@/pages/challenges/challenge_level_three_3.
 import challenge_level_three_4 from '@/pages/challenges/challenge_level_three_4.vue'
 import challenge_level_three_5 from '@/pages/challenges/challenge_level_three_5.vue'
 import challenge_level_three_6 from '@/pages/challenges/challenge_level_three_6.vue'
-import challenge_level_three_7 from '@/pages/challenges/challenge_level_three_7.vue'
 import challenge_level_three_8 from '@/pages/challenges/challenge_level_three_8.vue'
 import challenge_level_three_9 from '@/pages/challenges/challenge_level_three_9.vue'
 import MyScores from '@/pages/other/my_scores.vue'
@@ -72,9 +71,8 @@ const levels = [
       { id: 'challenge_level_three_4', component: challenge_level_three_4, symbol: 'Ξ', label: { ar: 'التحدي 4', en: 'Challenge 4' }, summary: { ar: 'تحدٍ عالي المستوى لربط الأنماط.', en: 'High-level challenge for spotting patterns.' } },
       { id: 'challenge_level_three_5', component: challenge_level_three_5, symbol: 'Θ', label: { ar: 'التحدي 5', en: 'Challenge 5' }, summary: { ar: 'مسألة حسابية تحتاج إلى خطوات دقيقة.', en: 'A numeric problem that needs careful steps.' } },
       { id: 'challenge_level_three_6', component: challenge_level_three_6, symbol: 'β', label: { ar: 'التحدي 6', en: 'Challenge 6' }, summary: { ar: 'إستراتيجية جديدة لبناء الحل خطوة بخطوة.', en: 'Strategic puzzle solved step by step.' } },
-      { id: 'challenge_level_three_7', component: challenge_level_three_7, symbol: 'γ', label: { ar: 'التحدي 7', en: 'Challenge 7' }, summary: { ar: 'هرم جمع متقدّم بقيم أكبر.', en: 'A larger, more demanding sum pyramid.' } },
-      { id: 'challenge_level_three_8', component: challenge_level_three_8, symbol: 'η', label: { ar: 'التحدي 8', en: 'Challenge 8' }, summary: { ar: 'اختبار المنطق السريع بالأرقام.', en: 'Fast-paced numeric logic test.' } },
-      { id: 'challenge_level_three_9', component: challenge_level_three_9, symbol: 'ζ', label: { ar: 'التحدي 9', en: 'Challenge 9' }, summary: { ar: 'لغز أخير يجمع بين التفكير والسرعة.', en: 'A final puzzle mixing reasoning with speed.' } },
+      { id: 'challenge_level_three_8', component: challenge_level_three_8, symbol: 'η', label: { ar: 'التحدي 7', en: 'Challenge 7' }, summary: { ar: 'اختبار المنطق السريع بالأرقام.', en: 'Fast-paced numeric logic test.' } },
+      { id: 'challenge_level_three_9', component: challenge_level_three_9, symbol: 'ζ', label: { ar: 'التحدي 8', en: 'Challenge 8' }, summary: { ar: 'لغز أخير يجمع بين التفكير والسرعة.', en: 'A final puzzle mixing reasoning with speed.' } },
     ],
   },
 ]

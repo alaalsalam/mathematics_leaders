@@ -234,4 +234,18 @@ watch(()=>props.lang,()=>{}) // لا شيء، فقط الحفاظ على توا�
 .btn{ display:inline-flex; align-items:center; gap:.35rem; padding:.5rem .7rem;
       border-radius:.75rem; border:1px solid #e5e7eb55; background:var(--bg); cursor:pointer }
 .ic{ width:16px; height:16px }
+[data-theme="dark"] .challenge3{ background:transparent; color:#e2e8f0 }
+[data-theme="dark"] .challenge3 .rule{ color:#cbd5f5 }
+[data-theme="dark"] .challenge3 .qcard{ background:#132338; border:1px solid rgba(148,163,184,.45); box-shadow:0 18px 32px rgba(7,15,32,.55) }
+[data-theme="dark"] .challenge3 .qtext{ color:#f1f5f9 }
+[data-theme="dark"] .challenge3 .opt{ background:#1c3050; border-color:rgba(148,163,184,.5); color:#f8fafc }
+[data-theme="dark"] .challenge3 .opt:hover{ border-color:#60a5fa; background:#223a60 }
+[data-theme="dark"] .challenge3 .opt.chosen{ box-shadow:0 0 0 2px rgba(96,165,250,.55) inset }
+[data-theme="dark"] .challenge3 .opt.ok{ background:rgba(34,197,94,.26); border-color:rgba(74,222,128,.6); color:#dcfce7 }
+[data-theme="dark"] .challenge3 .opt.bad{ background:rgba(248,113,113,.28); border-color:rgba(248,113,113,.55); color:#fee2e2 }
+[data-theme="dark"] .challenge3 .feedback{ color:#fca5a5 }
+[data-theme="dark"] .challenge3 .feedback.ok{ color:#bbf7d0 }
+[data-theme="dark"] .challenge3 .status{ color:#d1d9ff }
+[data-theme="dark"] .challenge3 .done{ color:#86efac }
+[data-theme="dark"] .challenge3 .btn{ background:#1c3050; border-color:rgba(148,163,184,.45); color:#f8fafc; box-shadow:0 10px 22px rgba(7,15,32,.4) }
 </style>

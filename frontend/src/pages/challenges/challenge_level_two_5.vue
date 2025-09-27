@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Check, RotateCcw, RefreshCw, Eraser } from 'lucide-vue-next'
+import { Check, RotateCcw, RefreshCw } from 'lucide-vue-next'
 
 const props = defineProps({ lang:{type:String,default:'ar'}, theme:{type:String,default:'light'} })
 
@@ -34,13 +34,52 @@ function rndInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
 function shuffle(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]] } return x }
 
 /* ===== state ===== */
-const target = ref({num:3, den:10, d2:5})  // t/den = 1/A - N/d2
-const A = ref(2)   // الحل الصحيح لمقام الكسر الأول
-const N = ref(1)   // الحل الصحيح لبسط الكسر الثاني
+const target = ref({num:1, den:6, d2:6})  // المعادلة الحالية
 const bank = ref([])              // أرقام السحب
 const answer = ref({ A:null, N:null })
 const toast = ref(null)
 const solved = ref(false)
+const puzzleBank = [
+  { id:'p1', target:{ num:1, den:6 }, d2:6,  solution:{ A:2, N:2 }, extras:[1,3,4,5,7,8] },
+  { id:'p2', target:{ num:1, den:6 }, d2:9,  solution:{ A:2, N:3 }, extras:[1,4,5,6,7,8] },
+  { id:'p3', target:{ num:1, den:6 }, d2:12, solution:{ A:2, N:4 }, extras:[1,3,5,6,7,9] },
+  { id:'p4', target:{ num:1, den:6 }, d2:6,  solution:{ A:3, N:1 }, extras:[2,4,5,7,8,9] },
+  { id:'p5', target:{ num:2, den:6 }, d2:6,  solution:{ A:2, N:1 }, extras:[3,4,5,7,8,9] },
+  { id:'p6', target:{ num:1, den:8 }, d2:8,  solution:{ A:2, N:3 }, extras:[1,2,4,5,6,7] },
+  { id:'p7', target:{ num:3, den:8 }, d2:8,  solution:{ A:2, N:1 }, extras:[2,4,5,6,7,9] },
+  { id:'p8', target:{ num:1, den:9 }, d2:9,  solution:{ A:3, N:2 }, extras:[1,3,4,5,6,7] },
+  { id:'p9', target:{ num:3, den:9 }, d2:6,  solution:{ A:2, N:1 }, extras:[2,4,5,7,8,9] },
+  { id:'p10', target:{ num:1, den:10 }, d2:5, solution:{ A:2, N:2 }, extras:[1,3,4,6,7,8] },
+  { id:'p11', target:{ num:2, den:10 }, d2:10, solution:{ A:2, N:3 }, extras:[1,4,5,6,7,9] },
+  { id:'p12', target:{ num:1, den:12 }, d2:4, solution:{ A:3, N:1 }, extras:[2,5,6,7,8,9] }
+]
+
+const currentPuzzle = ref(puzzleBank[0])
+const lastPuzzleId = ref(null)
+
+function pickNextPuzzle(){
+  if(puzzleBank.length === 1){
+    lastPuzzleId.value = puzzleBank[0].id
+    return puzzleBank[0]
+  }
+  let candidate
+  do{
+    candidate = puzzleBank[Math.floor(Math.random() * puzzleBank.length)]
+  }while(candidate.id === lastPuzzleId.value)
+  lastPuzzleId.value = candidate.id
+  return candidate
+}
+
+function buildBank(puzzle){
+  const options = new Set([puzzle.solution.A, puzzle.solution.N])
+  const spreads = puzzle.extras || []
+  spreads.forEach(v => options.add(v))
+  while(options.size < 8){
+    options.add(rndInt(1, 15))
+  }
+  return shuffle([...options])
+}
+
 const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
 
 function formatDigit(value){
@@ -55,42 +94,15 @@ const ruleText = computed(() => {
   return `Place integers to make the equation true:  ${target.value.num}/${target.value.den} =  1/□  −  □/${target.value.d2}.`
 })
 
-function gcd(a,b){ return b?gcd(b,a%b):Math.abs(a) }
-function simplify(n,d){ const g=gcd(n,d); return [n/g, d/g] }
-
-/* ابحث عشوائياً عن معادلة سليمة: t/10 مع حلول صحيحة */
 function newPuzzle(){
-  solved.value=false; toast.value=null; answer.value={A:null,N:null}
+  solved.value = false
+  toast.value = null
+  answer.value = { A:null, N:null }
 
-  let found=false
-  for(let tries=0; tries<200 && !found; tries++){
-    const den = 10               // نبقي المقام 10 كالورقة، ويمكن تغييره لاحقاً بسهولة
-    const num = rndInt(1,9)      // 1..9
-    const d2cand = shuffle([4,5,6,8,9,10])[0]  // مقام الكسر الثاني
-    // جرّب قيم A من 2..12 ثم احسب N
-    for(let a=2;a<=12 && !found;a++){
-      const value = 1/a - num/den
-      if(value <= 0) continue
-      const n = Math.round(d2cand * value)
-      if(Math.abs(d2cand*value - n) < 1e-9 && n>=1 && n<d2cand){
-        // تحقق من الصحة النهائية
-        const left = 1/a - n/d2cand
-        if(Math.abs(left - num/den) < 1e-9){
-          target.value = {num, den, d2:d2cand}
-          A.value=a; N.value=n
-          found=true
-        }
-      }
-    }
-  }
-
-  // بنك الأرقام: الإجابتان + مشتتات قريبة
-  const choices = new Set([A.value, N.value])
-  while(choices.size<8){
-    const v = rndInt(1,12)
-    choices.add(v)
-  }
-  bank.value = shuffle([...choices])
+  const puzzle = pickNextPuzzle()
+  currentPuzzle.value = puzzle
+  target.value = { num:puzzle.target.num, den:puzzle.target.den, d2:puzzle.d2 }
+  bank.value = buildBank(puzzle)
 }
 
 function onDragStart(ev, value){ ev.dataTransfer.setData('text/plain', String(value)) }
@@ -101,19 +113,15 @@ function dropTo(key, ev){
   answer.value[key] = v
   toast.value=null
 }
-function clearCell(key){ answer.value[key]=null }
-
 function isFilled(){ return answer.value.A!=null && answer.value.N!=null }
 function isCorrect(){
   if(!isFilled()) return false
   const AVal = answer.value.A
   const NVal = answer.value.N
   if(!AVal || !NVal) return false
-  const lhsNum = target.value.d2 - (AVal * NVal)
-  const lhsDen = AVal * target.value.d2
-  const rhsNum = target.value.num
-  const rhsDen = target.value.den
-  return lhsNum * rhsDen === rhsNum * lhsDen
+  const lhs = (1 / AVal) - (NVal / target.value.d2)
+  const rhs = target.value.num / target.value.den
+  return Math.abs(lhs - rhs) < 1e-9
 }
 
 async function addPoint(){

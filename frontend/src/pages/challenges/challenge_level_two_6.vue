@@ -7,47 +7,23 @@ const props = defineProps({ lang:{ type:String, default:'ar' }, theme:{ type:Str
 const copy = {
   ar:{
     title:'المستوى الثاني – التحدي 6: مقارنة الأوزان',
-    premise:{
-      line1:'وزن كرتان ومربع واحد يساويان ٨ وحدات.',
-      line2:'وزن كرتان ومثلث واحد يساويان ٦ وحدات.',
-      question:'ما وزن المربع الواحد مقارنة بالمثلث؟'
-    },
-    options:[
-      { id:'a', text:'ضعف وزن المثلث' },
-      { id:'b', text:'يساوي وزن المثلث' },
-      { id:'c', text:'نصف وزن المثلث' },
-      { id:'d', text:'أقل بـ٢ وحدة من وزن المثلث' },
-      { id:'e', text:'أكثر بـ٢ وحدة من وزن المثلث' }
-    ],
+    question:'ما وزن المربع الواحد مقارنة بالمثلث؟',
     newQ:'سؤال جديد', reset:'إعادة تعيين', check:'تحقّق',
-    correct:'إجابة صحيحة! المربع أثقل من المثلث بوحدتين.',
+    correct:'إجابة صحيحة! أحسنت في مقارنة الأوزان.',
     wrong:'إجابة غير صحيحة. أعد التفكير في المعادلات.',
     pick:'اختر إجابة أولاً.'
   },
   en:{
     title:'Level 2 – Challenge 6: Comparing weights',
-    premise:{
-      line1:'Two balls and one square weigh 8 units.',
-      line2:'Two balls and one triangle weigh 6 units.',
-      question:'How does the weight of the square compare to the triangle?'
-    },
-    options:[
-      { id:'a', text:'Twice the triangle' },
-      { id:'b', text:'Equal to the triangle' },
-      { id:'c', text:'Half the triangle' },
-      { id:'d', text:'2 units less than the triangle' },
-      { id:'e', text:'2 units more than the triangle' }
-    ],
+    question:'How does the weight of the square compare to the triangle?',
     newQ:'New question', reset:'Reset', check:'Check',
-    correct:'Correct! The square is heavier by 2 units.',
+    correct:'Correct! Great job comparing the weights.',
     wrong:'That is incorrect. Revisit the equations.',
     pick:'Select an option first.'
   }
 }
 
 const L = computed(()=> (copy[props.lang]?props.lang:'ar'))
-const CORRECT_ID = 'e'
-
 /* sounds */
 import successUrl from '@/assets/sounds/success2.mp3'
 import clapUrl    from '@/assets/sounds/clap.mp3'
@@ -57,10 +33,104 @@ const sClap  = typeof Audio!=='undefined' ? new Audio(clapUrl)    : null
 const sWrong = typeof Audio!=='undefined' ? new Audio(wrongUrl)   : null
 sOK && (sOK.preload='auto'); sClap && (sClap.preload='auto'); sWrong && (sWrong.preload='auto')
 
+const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
+
+function toArabicNumber(value){
+  return String(value).replace(/[0-9]/g, d => digitsMap[Number(d)])
+}
+
+function formatNumberByLang(value, lang){
+  return lang === 'ar' ? toArabicNumber(value) : String(value)
+}
+
+function unitsWord(value, lang){
+  if(lang === 'ar'){
+    return value <= 2 ? 'وحدة' : 'وحدات'
+  }
+  return value === 1 ? 'unit' : 'units'
+}
+
+const optionTemplates = {
+  ar:{
+    double:'ضعف وزن المثلث',
+    equal:'يساوي وزن المثلث',
+    half:'نصف وزن المثلث',
+    less:(n) => `أقل بـ${toArabicNumber(n)} ${unitsWord(n,'ar')} من وزن المثلث`,
+    more:(n) => `أكثر بـ${toArabicNumber(n)} ${unitsWord(n,'ar')} من وزن المثلث`
+  },
+  en:{
+    double:'Twice the triangle',
+    equal:'Equal to the triangle',
+    half:'Half the triangle',
+    less:(n) => `${n} ${unitsWord(n,'en')} less than the triangle`,
+    more:(n) => `${n} ${unitsWord(n,'en')} more than the triangle`
+  }
+}
+
+function buildOptions(puzzle, lang){
+  const magnitude = Math.abs(puzzle.difference)
+  const templates = optionTemplates[lang]
+  return [
+    { id:'a', text:templates.double },
+    { id:'b', text:templates.equal },
+    { id:'c', text:templates.half },
+    { id:'d', text:templates.less(magnitude) },
+    { id:'e', text:templates.more(magnitude) }
+  ]
+}
+
+function buildPremiseLines(puzzle, lang){
+  const squareTotal = formatNumberByLang(puzzle.totals.square, lang)
+  const triangleTotal = formatNumberByLang(puzzle.totals.triangle, lang)
+  if(lang === 'ar'){
+    return [
+      `وزن كرتان ومربع واحد يساويان ${squareTotal} وحدات.`,
+      `وزن كرتان ومثلث واحد يساويان ${triangleTotal} وحدات.`
+    ]
+  }
+  return [
+    `Two balls and one square weigh ${squareTotal} units.`,
+    `Two balls and one triangle weigh ${triangleTotal} units.`
+  ]
+}
+
+const puzzleBank = [
+  { id:'p1', totals:{ square:8, triangle:6 }, difference:2, correctId:'e' },
+  { id:'p2', totals:{ square:10, triangle:7 }, difference:3, correctId:'e' },
+  { id:'p3', totals:{ square:9, triangle:11 }, difference:-2, correctId:'d' },
+  { id:'p4', totals:{ square:12, triangle:8 }, difference:4, correctId:'e' },
+  { id:'p5', totals:{ square:7, triangle:10 }, difference:-3, correctId:'d' }
+]
+
+const currentPuzzle = ref(puzzleBank[0])
+const lastPuzzleId = ref(null)
+
+const correctId = computed(() => currentPuzzle.value.correctId)
+function pickNextPuzzle(){
+  if(puzzleBank.length === 1){
+    lastPuzzleId.value = puzzleBank[0].id
+    return puzzleBank[0]
+  }
+  let candidate
+  do{
+    candidate = puzzleBank[Math.floor(Math.random() * puzzleBank.length)]
+  }while(candidate.id === lastPuzzleId.value)
+  lastPuzzleId.value = candidate.id
+  return candidate
+}
+
+function shuffle(arr){
+  return arr.slice().sort(() => Math.random() - 0.5)
+}
+
 const selected = ref(null)
 const feedback = ref(null)
 const solved = ref(false)
 const shuffledOptions = ref(null)
+
+function applyOptions(){
+  shuffledOptions.value = shuffle(buildOptions(currentPuzzle.value, L.value))
+}
 
 function resetAll(){
   selected.value = null
@@ -81,7 +151,7 @@ async function checkAnswer(){
     sWrong && sWrong.play()
     return
   }
-  if(selected.value === CORRECT_ID){
+  if(selected.value === correctId.value){
     const wasSolved = solved.value
     solved.value = true
     feedback.value = copy[L.value].correct
@@ -97,17 +167,20 @@ async function checkAnswer(){
 }
 
 function randomizePrompt(){
-  shuffledOptions.value = copy[L.value].options.slice().sort(() => Math.random() - 0.5)
+  const puzzle = pickNextPuzzle()
+  currentPuzzle.value = puzzle
   resetAll()
+  applyOptions()
 }
 
 watch(() => props.lang, () => {
-  shuffledOptions.value = null
   resetAll()
-  randomizePrompt()
+  applyOptions()
 })
 
-const optionsList = computed(() => shuffledOptions.value || copy[L.value].options)
+const optionsList = computed(() => shuffledOptions.value || buildOptions(currentPuzzle.value, L.value))
+
+const premiseLines = computed(() => buildPremiseLines(currentPuzzle.value, L.value))
 
 onMounted(() => {
   randomizePrompt()
@@ -118,9 +191,8 @@ onMounted(() => {
   <div class="lvl2c6 challenge-surface" :data-theme="props.theme">
     <header class="head">
       <h2 class="title">{{ copy[L].title }}</h2>
-      <p class="premise">{{ copy[L].premise.line1 }}</p>
-      <p class="premise">{{ copy[L].premise.line2 }}</p>
-      <p class="question">{{ copy[L].premise.question }}</p>
+      <p v-for="(line, idx) in premiseLines" :key="idx" class="premise">{{ line }}</p>
+      <p class="question">{{ copy[L].question }}</p>
     </header>
 
     <section class="options">

@@ -8,14 +8,14 @@ const copy = {
   ar:{
     title:'المستوى الثالث – التحدي 9: شيفرة الرموز',
     intro:'حلّ المعادلات لتحديد قيمة كل رمز، ثم اسحب الحروف/الأرقام إلى مواقعها لفك الشيفرة.',
-    letters:'التحويل الحرفي', equations:'المعادلات', message:'الرسالة المشفّرة',
+    letters:'التحويل الحرفي', equations:'المعادلات', message:'الرسالة المشفّرة', bank:'بنك القيم',
     decoded:'الرسالة بعد الفَك', check:'تحقّق', reset:'مسح التعيينات', newQ:'تحدٍ جديد',
     needAll:'أكمل كل الحروف أولاً.', wrong:'التعيينات غير صحيحة، راجع الحلول.', correct:'رائع! قمت بفك الشيفرة بنجاح.'
   },
   en:{
     title:'Level 3 – Challenge 9: Cipher Grid',
     intro:'Solve each expression to find the value of every symbol, then drag letters/numbers into place to decode the message.',
-    letters:'Letter mapping', equations:'Expressions', message:'Encoded message',
+    letters:'Letter mapping', equations:'Expressions', message:'Encoded message', bank:'Value bank',
     decoded:'Decoded message', check:'Check', reset:'Reset assignments', newQ:'New challenge',
     needAll:'Assign all letters first.', wrong:'Some assignments are incorrect. Try again.', correct:'Great job! You decoded the cipher.'
   }
@@ -34,46 +34,111 @@ const puzzles = [
   {
     id:'p1',
     equations:[
-      { id:'b', expr:'b + 7 = 15', value:8 },
-      { id:'d', expr:'d - 1 = 10', value:11 },
-      { id:'e', expr:'2e = 30', value:15 },
-      { id:'f', expr:'2g f^2 = 40', value:5 },
-      { id:'h', expr:'3h - 2 = 19', value:7 },
-      { id:'j', expr:'j = 3h - 1', value:20 },
-      { id:'k', expr:'k - 1 = r', value:18 },
-      { id:'m', expr:'m = k - b', value:10 },
-      { id:'n', expr:'½ n = 13', value:26 },
-      { id:'p', expr:'¹⁄₇ p = 3', value:21 },
-      { id:'q', expr:'4q = 9 + 12', value:5 },
-      { id:'r', expr:'r = am + 14 (a=1,m=10)', value:24 },
-      { id:'t', expr:'t = am + 14 (a=1,m=10)', value:24 },
-      { id:'v', expr:'v = a² (a=3)', value:9 },
-      { id:'w', expr:'w = q² (q=5)', value:25 },
-      { id:'x', expr:'x = ⅔ r (r=6)', value:4 } // inconsistent but placeholder
+      { id:'M', expr:'M + 7 = 16', value:9 },
+      { id:'A', expr:'A / 2 = 7', value:14 },
+      { id:'T', expr:'T - 5 = 16', value:21 },
+      { id:'H', expr:'3 * H = 36', value:12 },
+      { id:'W', expr:'W - 4 = 14', value:18 },
+      { id:'I', expr:'I + 2 = 8', value:6 },
+      { id:'Z', expr:'Z / 2 = 13', value:26 },
+      { id:'L', expr:'L / 4 = 5', value:20 },
+      { id:'E', expr:'2 * E - 4 = 22', value:13 },
+      { id:'D', expr:'D + 9 = 25', value:16 }
     ],
     mappingTable:[
-      { letter:'a', value:5 },
-      { letter:'b', value:23 },
-      { letter:'c', value:14 },
-      { letter:'d', value:12 },
-      { letter:'e', value:18 },
-      { letter:'f', value:13 },
-      { letter:'g', value:17 },
-      { letter:'h', value:9 },
-      { letter:'i', value:22 },
-      { letter:'j', value:27 }
+      { letter:'M', value:9 },
+      { letter:'A', value:14 },
+      { letter:'T', value:21 },
+      { letter:'H', value:12 },
+      { letter:'W', value:18 },
+      { letter:'I', value:6 },
+      { letter:'Z', value:26 },
+      { letter:'L', value:20 },
+      { letter:'E', value:13 },
+      { letter:'D', value:16 }
     ],
-    message:[23,9,15,26,24,15,27]
+    message:[9,14,21,12,18,6,26]
+  },
+  {
+    id:'p2',
+    equations:[
+      { id:'V', expr:'V / 3 = 8', value:24 },
+      { id:'I', expr:'I + 2 = 7', value:5 },
+      { id:'C', expr:'3 * C = 54', value:18 },
+      { id:'T', expr:'T + 4 = 16', value:12 },
+      { id:'O', expr:'O - 5 = 15', value:20 },
+      { id:'R', expr:'R / 3 = 9', value:27 },
+      { id:'Y', expr:'2 * Y = 20', value:10 },
+      { id:'E', expr:'2 * E + 6 = 34', value:14 },
+      { id:'L', expr:'L * 2 = 16', value:8 },
+      { id:'S', expr:'S / 4 + 3 = 7', value:16 }
+    ],
+    mappingTable:[
+      { letter:'V', value:24 },
+      { letter:'I', value:5 },
+      { letter:'C', value:18 },
+      { letter:'T', value:12 },
+      { letter:'O', value:20 },
+      { letter:'R', value:27 },
+      { letter:'Y', value:10 },
+      { letter:'E', value:14 },
+      { letter:'L', value:8 },
+      { letter:'S', value:16 }
+    ],
+    message:[24,5,18,12,20,27,10]
+  },
+  {
+    id:'p3',
+    equations:[
+      { id:'P', expr:'P + 5 = 16', value:11 },
+      { id:'U', expr:'U / 4 = 7', value:28 },
+      { id:'Z', expr:'3 * Z = 27', value:9 },
+      { id:'L', expr:'L - 6 = 12', value:18 },
+      { id:'E', expr:'E + 6 = 21', value:15 },
+      { id:'S', expr:'2 * S = 24', value:12 },
+      { id:'A', expr:'A / 2 = 11', value:22 },
+      { id:'R', expr:'R + 5 = 19', value:14 },
+      { id:'T', expr:'T / 5 = 6', value:30 },
+      { id:'M', expr:'2 * M = 32', value:16 }
+    ],
+    mappingTable:[
+      { letter:'P', value:11 },
+      { letter:'U', value:28 },
+      { letter:'Z', value:9 },
+      { letter:'L', value:18 },
+      { letter:'E', value:15 },
+      { letter:'S', value:12 },
+      { letter:'A', value:22 },
+      { letter:'R', value:14 },
+      { letter:'T', value:30 },
+      { letter:'M', value:16 }
+    ],
+    message:[11,28,9,9,18,15,12]
   }
 ]
 
 const currentPuzzle = ref(puzzles[0])
+const lastPuzzleId = ref(null)
+
+function pickNextPuzzle(){
+  if(puzzles.length === 1){
+    lastPuzzleId.value = puzzles[0].id
+    return puzzles[0]
+  }
+  let candidate
+  do {
+    candidate = puzzles[Math.floor(Math.random() * puzzles.length)]
+  } while(candidate.id === lastPuzzleId.value)
+  lastPuzzleId.value = candidate.id
+  return candidate
+}
+
 const assignments = reactive({})
 const feedback = ref(null)
 const solved = ref(false)
 
 function initPuzzle(){
-  const puzzle = puzzles[0]
+  const puzzle = pickNextPuzzle()
   currentPuzzle.value = puzzle
   Object.keys(assignments).forEach(k => delete assignments[k])
   feedback.value = null

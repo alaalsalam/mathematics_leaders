@@ -37,76 +37,168 @@ const sClap  = typeof Audio!=='undefined' ? new Audio(clapUrl)    : null
 const sWrong = typeof Audio!=='undefined' ? new Audio(wrongUrl)   : null
 sOK && (sOK.preload='auto'); sClap && (sClap.preload='auto'); sWrong && (sWrong.preload='auto')
 
+const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
+
+function toArabicNumber(value, decimals){
+  let str
+  if(typeof value === 'number'){
+    str = decimals != null ? value.toFixed(decimals) : String(value)
+  }else{
+    str = String(value)
+  }
+  return str.replace(/[0-9]/g, d => digitsMap[Number(d)]).replace(/\./g, '٫')
+}
+
+function makeEqA({ multiplier, offset, aDigit, bDigit }){
+  const multiplierAr = toArabicNumber(multiplier, 1)
+  const multiplierEn = multiplier.toFixed(1)
+  const offsetFixed = offset.toFixed(2)
+  const offsetSuffixEn = offsetFixed.slice(1)
+  const offsetSuffixAr = toArabicNumber(offsetFixed).slice(1)
+  return {
+    id:'eqA',
+    slots:{ a:aDigit, b:bDigit },
+    order:['a','b'],
+    template:{
+      ar:['أ. ', multiplierAr, ' × ٠٫', { slot:'a' }, ' = ', { slot:'b' }, offsetSuffixAr],
+      en:['A. ', multiplierEn, ' × 0.', { slot:'a' }, ' = ', { slot:'b' }, offsetSuffixEn]
+    },
+    evaluate(values){
+      const left = multiplier * (values.a / 10)
+      const right = values.b + offset
+      return Math.abs(left - right) < 1e-6
+    }
+  }
+}
+
+function makeEqB({ baseLeft, baseRight, cDigit, dDigit, result, decimals = 2 }){
+  const baseLeftAr = toArabicNumber(baseLeft, 0) + '٫'
+  const baseRightAr = toArabicNumber(baseRight, 0) + '٫'
+  const baseLeftEn = `${baseLeft}.`
+  const baseRightEn = `${baseRight}.`
+  const resultEn = decimals != null ? result.toFixed(decimals) : String(result)
+  const resultAr = toArabicNumber(resultEn)
+  return {
+    id:'eqB',
+    slots:{ c:cDigit, d:dDigit },
+    order:['c','d'],
+    template:{
+      ar:['ب. ', baseLeftAr, { slot:'c' }, ' × ', baseRightAr, { slot:'d' }, ' = ', resultAr],
+      en:['B. ', baseLeftEn, { slot:'c' }, ' × ', baseRightEn, { slot:'d' }, ' = ', resultEn]
+    },
+    evaluate(values){
+      const left = (baseLeft + values.c/10) * (baseRight + values.d/10)
+      return Math.abs(left - result) < 1e-6
+    }
+  }
+}
+
+function makeEqC({ secondBase, eDigit, fDigit, result, decimals = 2 }){
+  const secondBaseAr = toArabicNumber(secondBase, 0) + '٫'
+  const secondBaseEn = `${secondBase}.`
+  const resultEn = decimals != null ? result.toFixed(decimals) : String(result)
+  const resultAr = toArabicNumber(resultEn)
+  return {
+    id:'eqC',
+    slots:{ e:eDigit, f:fDigit },
+    order:['e','f'],
+    template:{
+      ar:['ج. ', { slot:'e' }, '٫٩ × ', secondBaseAr, { slot:'f' }, ' = ', resultAr],
+      en:['C. ', { slot:'e' }, '.9 × ', secondBaseEn, { slot:'f' }, ' = ', resultEn]
+    },
+    evaluate(values){
+      const left = (values.e + 0.9) * (secondBase + values.f/10)
+      return Math.abs(left - result) < 1e-6
+    }
+  }
+}
+
+function makeEqD({ gDigit, hDigit }){
+  return {
+    id:'eqD',
+    slots:{ g:gDigit, h:hDigit },
+    order:['g','h'],
+    template:{
+      ar:['د. ٤٫', { slot:'g' }, ' + ١٫٢٥ = ٥٫', { slot:'h' }, '٥'],
+      en:['D. 4.', { slot:'g' }, ' + 1.25 = 5.', { slot:'h' }, '5']
+    },
+    evaluate(values){
+      const left = (4 + values.g/10) + 1.25
+      const right = 5 + values.h/10 + 0.05
+      return Math.abs(left - right) < 1e-6
+    }
+  }
+}
+
 const puzzleBank = [
   {
     id:'p1',
     equations:[
-      {
-        id:'eqA',
-        slots:{ a:8, b:7 },
-        order:['a','b'],
-        template:{
-          ar:['أ. ٩٫٣ × ٠٫', {slot:'a'}, ' = ', {slot:'b'}, '٫٤٤'],
-          en:['A. 9.3 × 0.', {slot:'a'}, ' = ', {slot:'b'}, '.44']
-        },
-        evaluate(values){
-          const left = 9.3 * (values.a / 10)
-          const right = values.b + 0.44
-          return Math.abs(left - right) < 1e-6
-        }
-      },
-      {
-        id:'eqB',
-        slots:{ c:4, d:9 },
-        order:['c','d'],
-        template:{
-          ar:['ب. ٢٫', {slot:'c'}, ' × ٢٫', {slot:'d'}, ' = ٦٫٩٦'],
-          en:['B. 2.', {slot:'c'}, ' × 2.', {slot:'d'}, ' = 6.96']
-        },
-        evaluate(values){
-          const left = (2 + values.c/10) * (2 + values.d/10)
-          return Math.abs(left - 6.96) < 1e-6
-        }
-      },
-      {
-        id:'eqC',
-        slots:{ e:4, f:7 },
-        order:['e','f'],
-        template:{
-          ar:['ج. ', {slot:'e'}, '٫٩ × ٣٫', {slot:'f'}, ' = ١٨٫١٣'],
-          en:['C. ', {slot:'e'}, '.9 × 3.', {slot:'f'}, ' = 18.13']
-        },
-        evaluate(values){
-          const left = (values.e + 0.9) * (3 + values.f/10)
-          return Math.abs(left - 18.13) < 1e-6
-        }
-      },
-      {
-        id:'eqD',
-        slots:{ g:7, h:9 },
-        order:['g','h'],
-        template:{
-          ar:['د. ٤٫', {slot:'g'}, ' + ١٫٢٥ = ٥٫', {slot:'h'}, '٥'],
-          en:['D. 4.', {slot:'g'}, ' + 1.25 = 5.', {slot:'h'}, '5']
-        },
-        evaluate(values){
-          const left = (4 + values.g/10) + 1.25
-          const right = 5 + values.h/10 + 0.05
-          return Math.abs(left - right) < 1e-6
-        }
-      },
+      makeEqA({ multiplier:9.3, offset:0.44, aDigit:8, bDigit:7 }),
+      makeEqB({ baseLeft:2, baseRight:2, cDigit:4, dDigit:9, result:6.96, decimals:2 }),
+      makeEqC({ secondBase:3, eDigit:4, fDigit:7, result:18.13, decimals:2 }),
+      makeEqD({ gDigit:7, hDigit:9 })
+    ]
+  },
+  {
+    id:'p2',
+    equations:[
+      makeEqA({ multiplier:8.6, offset:0.16, aDigit:6, bDigit:5 }),
+      makeEqB({ baseLeft:2, baseRight:2, cDigit:1, dDigit:6, result:5.46, decimals:2 }),
+      makeEqC({ secondBase:3, eDigit:2, fDigit:5, result:10.15, decimals:2 }),
+      makeEqD({ gDigit:3, hDigit:5 })
+    ]
+  },
+  {
+    id:'p3',
+    equations:[
+      makeEqA({ multiplier:7.8, offset:0.24, aDigit:8, bDigit:6 }),
+      makeEqB({ baseLeft:2, baseRight:2, cDigit:5, dDigit:2, result:5.5, decimals:2 }),
+      makeEqC({ secondBase:3, eDigit:3, fDigit:6, result:14.04, decimals:2 }),
+      makeEqD({ gDigit:2, hDigit:4 })
+    ]
+  },
+  {
+    id:'p4',
+    equations:[
+      makeEqA({ multiplier:6.4, offset:0.28, aDigit:2, bDigit:1 }),
+      makeEqB({ baseLeft:2, baseRight:2, cDigit:8, dDigit:3, result:6.44, decimals:2 }),
+      makeEqC({ secondBase:3, eDigit:5, fDigit:2, result:18.88, decimals:2 }),
+      makeEqD({ gDigit:4, hDigit:6 })
+    ]
+  },
+  {
+    id:'p5',
+    equations:[
+      makeEqA({ multiplier:6.4, offset:0.12, aDigit:8, bDigit:5 }),
+      makeEqB({ baseLeft:2, baseRight:2, cDigit:0, dDigit:9, result:5.8, decimals:2 }),
+      makeEqC({ secondBase:3, eDigit:6, fDigit:1, result:21.39, decimals:2 }),
+      makeEqD({ gDigit:1, hDigit:3 })
     ]
   }
 ]
 
 const currentPuzzle = ref(puzzleBank[0])
+const lastPuzzleId = ref(null)
+
+function pickNextPuzzle(){
+  if(puzzleBank.length === 1){
+    lastPuzzleId.value = puzzleBank[0].id
+    return puzzleBank[0]
+  }
+  let candidate
+  do{
+    candidate = puzzleBank[Math.floor(Math.random()*puzzleBank.length)]
+  }while(candidate.id === lastPuzzleId.value)
+  lastPuzzleId.value = candidate.id
+  return candidate
+}
 const answers = reactive({})
 const totalCounts = reactive({})
 const bankCounts = reactive({})
 const slotsMeta = ref([])
 const feedback = ref(null)
 const solved = ref(false)
-const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
 
 function formatDigit(value){
   if(value == null) return ''
@@ -121,7 +213,7 @@ function shuffle(arr){
 }
 
 function initPuzzle(){
-  const puzzle = puzzleBank[Math.floor(Math.random()*puzzleBank.length)]
+  const puzzle = pickNextPuzzle()
   currentPuzzle.value = puzzle
   feedback.value = null
   solved.value = false

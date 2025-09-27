@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Check, RotateCcw, RefreshCw } from 'lucide-vue-next'
 
 const props = defineProps({ lang:{type:String,default:'ar'}, theme:{type:String,default:'light'} })
@@ -40,7 +40,7 @@ sOK && (sOK.preload='auto'); sClap && (sClap.preload='auto'); sWrong && (sWrong.
 const puzzles = [
   {
     id: 'p1',
-    target: 10,
+    target: 10.0,
     grid: [
       [1.2, 0.8, 2.5, 1.3, 0.9],
       [2.1, 3.4, 2.0, 0.6, 1.5],
@@ -54,7 +54,7 @@ const puzzles = [
   },
   {
     id: 'p2',
-    target: 10,
+    target: 10.0,
     grid: [
       [0.8, 1.7, 2.1, 0.9, 1.4],
       [2.6, 1.5, 1.9, 1.1, 2.9],
@@ -68,7 +68,7 @@ const puzzles = [
   },
   {
     id: 'p3',
-    target: 10,
+    target: 10.0,
     grid: [
       [2.5, 1.1, 0.8, 1.4, 1.2],
       [0.9, 2.0, 1.3, 1.7, 1.0],
@@ -80,14 +80,126 @@ const puzzles = [
       { r:0, c:0 }, { r:1, c:1 }, { r:2, c:2 }, { r:3, c:3 }, { r:4, c:4 }
     ],
   },
+  {
+    id: 'p4',
+    target: 10.0,
+    grid: [
+      [1.1, 0.9, 1.7, 1.3, 2.1],
+      [2.0, 1.4, 2.0, 1.1, 1.6],
+      [1.5, 2.2, 1.8, 1.4, 1.3],
+      [0.8, 1.9, 2.3, 1.2, 1.1],
+      [1.6, 1.5, 2.2, 1.7, 0.9],
+    ],
+    solution: [
+      { r:0, c:2 }, { r:1, c:2 }, { r:2, c:2 }, { r:3, c:2 }, { r:4, c:2 }
+    ],
+  },
+  {
+    id: 'p5',
+    target: 10.2,
+    grid: [
+      [1.0, 1.3, 0.9, 1.5, 1.9],
+      [1.6, 1.2, 1.4, 1.8, 1.0],
+      [1.7, 1.1, 2.1, 1.4, 1.2],
+      [2.4, 2.0, 1.5, 1.3, 0.8],
+      [2.4, 1.5, 1.6, 1.1, 0.7],
+    ],
+    solution: [
+      { r:0, c:4 }, { r:1, c:3 }, { r:2, c:2 }, { r:3, c:1 }, { r:4, c:0 }
+    ],
+  },
+  {
+    id: 'p6',
+    target: 9.0,
+    grid: [
+      [1.8, 2.2, 1.6, 1.5, 1.9],
+      [1.3, 0.9, 2.1, 2.5, 1.1],
+      [1.4, 1.7, 1.2, 1.8, 1.6],
+      [1.0, 2.3, 1.5, 1.4, 2.2],
+      [1.6, 1.1, 2.0, 1.7, 0.8],
+    ],
+    solution: [
+      { r:0, c:0 }, { r:0, c:1 }, { r:0, c:2 }, { r:0, c:3 }, { r:0, c:4 }
+    ],
+  },
+  {
+    id: 'p7',
+    target: 9.3,
+    grid: [
+      [1.2, 1.5, 2.1, 1.0, 1.4],
+      [0.9, 2.0, 1.7, 1.9, 1.2],
+      [1.3, 1.8, 2.2, 1.6, 1.1],
+      [1.5, 1.9, 1.4, 1.7, 2.3],
+      [1.0, 2.1, 1.5, 1.2, 1.8],
+    ],
+    solution: [
+      { r:0, c:1 }, { r:1, c:1 }, { r:2, c:1 }, { r:3, c:1 }, { r:4, c:1 }
+    ],
+  },
+  {
+    id: 'p8',
+    target: 9.0,
+    grid: [
+      [1.4, 1.2, 2.0, 1.6, 0.9],
+      [1.1, 1.8, 1.4, 2.3, 1.5],
+      [2.2, 1.3, 1.7, 1.2, 1.1],
+      [1.5, 2.4, 1.6, 1.5, 1.9],
+      [2.0, 1.7, 1.5, 1.4, 2.6],
+    ],
+    solution: [
+      { r:0, c:0 }, { r:1, c:1 }, { r:2, c:2 }, { r:3, c:3 }, { r:4, c:4 }
+    ],
+  },
+  {
+    id: 'p9',
+    target: 10.0,
+    grid: [
+      [1.6, 1.0, 1.2, 1.9, 2.1],
+      [1.3, 1.5, 2.2, 1.8, 1.1],
+      [2.0, 1.8, 1.4, 1.5, 1.7],
+      [1.2, 2.3, 1.6, 1.7, 1.0],
+      [2.4, 1.9, 1.5, 1.2, 0.8],
+    ],
+    solution: [
+      { r:0, c:4 }, { r:1, c:3 }, { r:2, c:2 }, { r:3, c:1 }, { r:4, c:0 }
+    ],
+  },
+  {
+    id: 'p10',
+    target: 9.0,
+    grid: [
+      [1.0, 1.7, 1.3, 2.1, 1.6],
+      [1.5, 1.1, 2.4, 1.6, 1.8],
+      [1.9, 2.0, 1.5, 1.2, 1.3],
+      [1.4, 1.9, 1.7, 2.0, 1.1],
+      [2.1, 2.0, 1.8, 1.5, 1.6],
+    ],
+    solution: [
+      { r:4, c:0 }, { r:4, c:1 }, { r:4, c:2 }, { r:4, c:3 }, { r:4, c:4 }
+    ],
+  },
 ]
 
 const currentPuzzle = ref(puzzles[0])
+const lastPuzzleId = ref(null)
 const selected = ref(new Set())
 const solved = ref(false)
 const feedback = ref(null)
 
 function coordKey(r,c){ return `${r},${c}` }
+
+function pickNextPuzzle(){
+  if(puzzles.length === 1){
+    lastPuzzleId.value = puzzles[0].id
+    return puzzles[0]
+  }
+  let candidate
+  do{
+    candidate = puzzles[Math.floor(Math.random() * puzzles.length)]
+  }while(candidate.id === lastPuzzleId.value)
+  lastPuzzleId.value = candidate.id
+  return candidate
+}
 
 function resetSelection(){
   selected.value = new Set()
@@ -96,7 +208,7 @@ function resetSelection(){
 }
 
 function pickPuzzle(){
-  const next = puzzles[Math.floor(Math.random()*puzzles.length)]
+  const next = pickNextPuzzle()
   currentPuzzle.value = next
   resetSelection()
 }
@@ -190,6 +302,10 @@ async function checkLine(){
 function isSolutionCell(r,c){
   return currentPuzzle.value.solution.some(cell => cell.r===r && cell.c===c)
 }
+
+onMounted(() => {
+  pickPuzzle()
+})
 </script>
 
 <template>

@@ -93,6 +93,130 @@ const puzzles = [
       { from:'RT', to:'C', value:1.2 },
       { from:'C', to:'LT', value:1.5 }
     ]
+  },
+  {
+    id:'p3',
+    target:5.4,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:90 },
+      { id:'RB', x:340, y:210 },
+      { id:'CT', x:260, y:70 },
+      { id:'C',  x:260, y:150 },
+      { id:'CB', x:260, y:230 },
+      { id:'LT', x:180, y:90 },
+      { id:'LB', x:180, y:210 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.2 },
+      { from:'RT', to:'CT', value:1.5 },
+      { from:'CT', to:'C', value:1.0 },
+      { from:'C', to:'LT', value:1.5 },
+      { from:'LT', to:'B', value:2.0 },
+      { from:'A', to:'RB', value:1.4 },
+      { from:'RB', to:'CB', value:1.1 },
+      { from:'CB', to:'C', value:1.2 },
+      { from:'C', to:'LB', value:1.3 },
+      { from:'LB', to:'B', value:1.8 },
+      { from:'RT', to:'C', value:1.3 },
+      { from:'CT', to:'CB', value:1.4 }
+    ]
+  },
+  {
+    id:'p4',
+    target:4.5,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:110 },
+      { id:'RB', x:340, y:210 },
+      { id:'CT', x:260, y:90 },
+      { id:'C',  x:260, y:160 },
+      { id:'CB', x:260, y:240 },
+      { id:'LT', x:180, y:120 },
+      { id:'LB', x:180, y:210 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.1 },
+      { from:'RT', to:'CT', value:1.3 },
+      { from:'CT', to:'C', value:1.2 },
+      { from:'C', to:'LT', value:1.25 },
+      { from:'LT', to:'B', value:2.0 },
+      { from:'A', to:'RB', value:1.5 },
+      { from:'RB', to:'CB', value:1.2 },
+      { from:'CB', to:'C', value:1.0 },
+      { from:'C', to:'LB', value:1.4 },
+      { from:'LB', to:'B', value:1.8 },
+      { from:'RT', to:'C', value:1.4 },
+      { from:'CT', to:'CB', value:1.1 }
+    ]
+  },
+  {
+    id:'p5',
+    target:7.2,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:95 },
+      { id:'RB', x:340, y:205 },
+      { id:'CT', x:260, y:65 },
+      { id:'C',  x:260, y:150 },
+      { id:'CB', x:260, y:235 },
+      { id:'LT', x:180, y:105 },
+      { id:'LB', x:180, y:205 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.2 },
+      { from:'RT', to:'CT', value:1.5 },
+      { from:'CT', to:'C', value:1.0 },
+      { from:'C', to:'LT', value:1.2 },
+      { from:'LT', to:'B', value:1.6 },
+      { from:'A', to:'RB', value:0.9 },
+      { from:'RB', to:'CB', value:1.4 },
+      { from:'CB', to:'C', value:1.3 },
+      { from:'C', to:'LB', value:2.0 },
+      { from:'LB', to:'B', value:2.0 },
+      { from:'RT', to:'C', value:1.3 },
+      { from:'CT', to:'CB', value:1.2 }
+    ]
+  },
+  {
+    id:'p6',
+    target:4.8,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:105 },
+      { id:'RB', x:340, y:215 },
+      { id:'CT', x:260, y:75 },
+      { id:'C',  x:260, y:155 },
+      { id:'CB', x:260, y:235 },
+      { id:'LT', x:180, y:110 },
+      { id:'LB', x:180, y:215 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.3 },
+      { from:'RT', to:'CT', value:1.2 },
+      { from:'CT', to:'C', value:1.1 },
+      { from:'C', to:'LT', value:1.4 },
+      { from:'LT', to:'B', value:1.7 },
+      { from:'A', to:'RB', value:1.25 },
+      { from:'RB', to:'CB', value:1.2 },
+      { from:'CB', to:'C', value:1.0 },
+      { from:'C', to:'LB', value:1.6 },
+      { from:'LB', to:'B', value:2.0 },
+      { from:'RT', to:'C', value:1.2 },
+      { from:'CT', to:'CB', value:1.3 }
+    ]
   }
 ]
 
@@ -103,6 +227,7 @@ function withCoords(edge, nodes){
 }
 
 const currentPuzzle = ref(puzzles[0])
+const lastPuzzleId = ref(null)
 const path = ref([]) // array of node ids
 const feedback = ref(null)
 const solved = ref(false)
@@ -125,6 +250,19 @@ const product = computed(() => selectedEdges.value.reduce((acc, ed) => acc * ed.
 
 function hasEdge(a,b){
   return edges.value.some(ed => (ed.from===a && ed.to===b) || (ed.from===b && ed.to===a))
+}
+
+function pickNextPuzzle(){
+  if(puzzles.length === 1){
+    lastPuzzleId.value = puzzles[0].id
+    return puzzles[0]
+  }
+  let candidate
+  do{
+    candidate = puzzles[Math.floor(Math.random() * puzzles.length)]
+  }while(candidate.id === lastPuzzleId.value)
+  lastPuzzleId.value = candidate.id
+  return candidate
 }
 
 function resetPath(){
@@ -193,7 +331,7 @@ async function checkPath(){
 }
 
 function initPuzzle(){
-  const puzzle = puzzles[Math.floor(Math.random()*puzzles.length)]
+  const puzzle = pickNextPuzzle()
   currentPuzzle.value = puzzle
   resetPath()
 }
