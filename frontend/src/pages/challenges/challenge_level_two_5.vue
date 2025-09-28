@@ -146,38 +146,71 @@ onMounted(newPuzzle)
     <p class="rule">{{ ruleText }}</p>
 
     <!-- المعادلة -->
-    <div class="equation" dir="ltr">
-      <div class="frac">
-        <div class="top">{{ formatDigit(target.num) }}</div>
-        <div class="bar"></div>
-        <div class="bot">{{ formatDigit(target.den) }}</div>
-      </div>
-      <span class="eq">=</span>
+<!-- المعادلة -->
+<div class="equation" :dir="L==='ar' ? 'rtl' : 'ltr'">
+  <!-- العربية:  □/d2  −  1/□ -->
+  <template v-if="L==='ar'">
 
-      <div class="frac">
-        <div class="top">1</div>
-        <div class="bar"></div>
-        <div class="bot">
-          <div class="drop" @dragover="allowDrop" @drop="dropTo('A', $event)">
-            <span v-if="answer.A!=null" class="num">{{ formatDigit(answer.A) }}</span>
-            <span v-else class="placeholder">□</span>
-          </div>
+    <div class="frac">
+      <div class="top">
+        <div class="drop" @dragover="allowDrop" @drop="dropTo('N', $event)">
+          <span v-if="answer.N!=null" class="num">{{ formatDigit(answer.N) }}</span>
+          <span v-else class="placeholder">□</span>
         </div>
       </div>
+      <div class="bar"></div>
+      <div class="bot">{{ formatDigit(target.d2) }}</div>
+    </div>
+    <span class="minus">−</span>
 
-      <span class="minus">−</span>
-
-      <div class="frac">
-        <div class="top">
-          <div class="drop" @dragover="allowDrop" @drop="dropTo('N', $event)">
-            <span v-if="answer.N!=null" class="num">{{ formatDigit(answer.N) }}</span>
-            <span v-else class="placeholder">□</span>
-          </div>
+    <div class="frac">
+      <div class="top">1</div>
+      <div class="bar"></div>
+      <div class="bot">
+        <div class="drop" @dragover="allowDrop" @drop="dropTo('A', $event)">
+          <span v-if="answer.A!=null" class="num">{{ formatDigit(answer.A) }}</span>
+          <span v-else class="placeholder">□</span>
         </div>
-        <div class="bar"></div>
-        <div class="bot">{{ formatDigit(target.d2) }}</div>
       </div>
     </div>
+ 
+  </template>
+
+  <!-- الإنجليزية:  1/□  −  □/d2 -->
+  <template v-else>
+    <div class="frac">
+      <div class="top">1</div>
+      <div class="bar"></div>
+      <div class="bot">
+        <div class="drop" @dragover="allowDrop" @drop="dropTo('A', $event)">
+          <span v-if="answer.A!=null" class="num">{{ formatDigit(answer.A) }}</span>
+          <span v-else class="placeholder">□</span>
+        </div>
+      </div>
+    </div>
+
+    <span class="minus">−</span>
+
+    <div class="frac">
+      <div class="top">
+        <div class="drop" @dragover="allowDrop" @drop="dropTo('N', $event)">
+          <span v-if="answer.N!=null" class="num">{{ formatDigit(answer.N) }}</span>
+          <span v-else class="placeholder">□</span>
+        </div>
+      </div>
+      <div class="bar"></div>
+      <div class="bot">{{ formatDigit(target.d2) }}</div>
+    </div>
+  </template>
+  <!-- الطرف الأيسر ثابت -->
+  <span class="eq">=</span>
+  <div class="frac">
+    <div class="top">{{ formatDigit(target.num) }}</div>
+    <div class="bar"></div>
+    <div class="bot">{{ formatDigit(target.den) }}</div>
+  </div>
+</div>
+
 
     <!-- البنك -->
     <div class="bank">

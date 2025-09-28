@@ -125,9 +125,9 @@ onMounted(newPuzzle)
 
 
     <div class="panel">
-      <div class="status">
+ <!--     <div class="status">
         {{ T[L].picked }} {{ picks.length }} · {{ pickedSum }}
-      </div>
+      </div> -->
       <div class="actions">
         <button class="btn" @click="resetPicks"><RotateCcw class="ic" /> {{ T[L].reset }}</button>
         <button class="btn" @click="checkNow"><Check class="ic" /> {{ T[L].check }}</button>

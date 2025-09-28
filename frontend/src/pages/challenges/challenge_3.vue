@@ -206,7 +206,7 @@ watch(()=>props.lang,()=>{}) // لا شيء، فقط الحفاظ على توا�
 
 .qs{ display:grid; gap:.75rem }
 .qcard{
-  background:var(--bg);
+  /* background:var(--bg); */
   border:1px solid #e5e7eb55; border-radius:1rem;
   padding:.75rem .9rem; box-shadow:0 4px 14px rgba(0,0,0,.06)
 }
@@ -214,7 +214,8 @@ watch(()=>props.lang,()=>{}) // لا شيء، فقط الحفاظ على توا�
 .opts{ display:flex; flex-wrap:wrap; gap:.5rem }
 .opt{
   padding:.45rem .7rem; border-radius:.75rem; cursor:pointer;
-  border:1px solid #e5e7ebaa; background:var(--bg);
+  border:1px solid #e5e7ebaa;
+   /* background:var(--bg); */
   font-variant-numeric:tabular-nums;
 }
 .opt.chosen{ box-shadow:0 0 0 2px rgba(99,102,241,.35) inset }

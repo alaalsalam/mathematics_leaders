@@ -116,7 +116,7 @@ watch(()=>props.lang,()=>{})
       <div class="choice" v-for="(op, i) in options" :key="i" @click="pick=i" :class="{sel: pick===i}">
         <input type="radio" :checked="pick===i" />
         <span class="pair">{{ op[0] }} ، {{ op[1] }}</span>
-        <small class="hint">({{ op[0] + op[1] }} ، {{ op[0] - op[1] }})</small>
+        <!-- <small class="hint">({{ op[0] + op[1] }} ، {{ op[0] - op[1] }})</small> -->
       </div>
     </div>
 
