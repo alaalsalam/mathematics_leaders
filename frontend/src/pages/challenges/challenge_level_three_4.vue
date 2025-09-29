@@ -65,9 +65,9 @@ function formatDigit(value){
 function makeEqA({ multiplier, offset, aDigit, bDigit }){
   const multAr = toArabicNumber(multiplier, 1)
   const multEn = multiplier.toFixed(1)
-  const offStr = offset.toFixed(2)           // e.g. "0.28"
-  const offEnSuffix = offStr.slice(1)        // ".28"
-  const offArSuffix = toArabicNumber(offStr).slice(1)
+  const offStr = offset.toFixed(2)           
+  const offEnSuffix = offStr.slice(1)        
+  const offArSuffix = toArabicNumber(offEnSuffix)
   return {
     id:'eqA',
     slots:{ a:aDigit, b:bDigit },
@@ -112,7 +112,8 @@ function makeEqC({ secondBase, eDigit, fDigit, result, decimals = 2 }){
     slots:{ e:eDigit, f:fDigit },
     order:['e','f'],
     template:{
-      ar:['ج. ', {slot:'e'}, '٫', {num:true,text:toArabicNumber(9,0).slice(1,-1)}, ' × ', {num:true,text:sbAr}, '٫', {slot:'f'}, ' = ', {num:true,text:resAr}],
+      // ar:['ج. ', {slot:'e'}, '٫', {num:true,text:toArabicNumber(9,0).slice(1,-1)}, ' × ', {num:true,text:sbAr}, '٫', {slot:'f'}, ' = ', {num:true,text:resAr}],
+      ar:['ج. ', {slot:'e'}, '٫', {num:true,text:toArabicNumber(9,0)}, ' × ', {num:true,text:sbAr}, '٫', {slot:'f'}, ' = ', {num:true,text:resAr}],
       en:['C. ', {slot:'e'}, '.9 × ', {num:true,text:sbEn}, '.', {slot:'f'}, ' = ', resEn]
     },
     evaluate(v){

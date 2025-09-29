@@ -1,4 +1,4 @@
-<script setup>
+<!-- <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { Check, RotateCcw, RefreshCw, Eraser } from 'lucide-vue-next'
 
@@ -265,4 +265,318 @@ watch(()=>props.lang,()=>{})
 
 .toast{ margin-top:.5rem; padding:.5rem .75rem; border-radius:.75rem; background:#fee2e2; color:#991b1b; border:1px solid #fecaca }
 .toast.ok{ background:#dcfce7; color:#166534; border-color:#bbf7d0 }
+</style> -->
+<script setup>
+/* =========================================================
+   Level 2 — Challenge 2: Magic Square (3×3)
+   Dark-mode pass:
+   - Strong, themeable tokens for panels/borders/placeholders
+   - Higher contrast dropzones & chips
+   - Clear focus rings and hover states
+   - No logic changes (drag & drop with quantities)
+========================================================= */
+
+import { ref, computed, onMounted, watch } from 'vue'
+import { Check, RotateCcw, RefreshCw, Eraser } from 'lucide-vue-next'
+
+const props = defineProps({ lang:{type:String,default:'ar'}, theme:{type:String,default:'light'} })
+
+/* ---------- copy ---------- */
+const T = {
+  ar:{
+    title:'المستوى الثاني – التحدي 2: أكمل مربعاً سحرياً',
+    rule:(M)=>`ضع الأعداد بحيث يكون مجموع كل صف وعمود وقطر مساوياً ${M}. اسحب القيم المفقودة إلى أماكنها. الأعداد جميعها مختلفة.`,
+    bank:'لوحة الأعداد', newQ:'سؤال جديد', reset:'إعادة تعيين', check:'تحقّق',
+    correct:'إجابة صحيحة', wrong:'تحقق من المجاميع أو التكرار', clear:'تفريغ الخلية'
+  },
+  en:{
+    title:'Level 2 – Challenge 2: Complete a magic square',
+    rule:(M)=>`Place numbers so each row, column, and diagonal sums to ${M}. Drag the missing values into place. All numbers are distinct.`,
+    bank:'Number bank', newQ:'New puzzle', reset:'Reset', check:'Check',
+    correct:'Correct answer', wrong:'Check sums or duplicates', clear:'Clear cell'
+  }
+}
+const L = computed(()=> (T[props.lang]?props.lang:'ar'))
+
+/* ---------- sounds (optional) ---------- */
+import successUrl from '@/assets/sounds/success2.mp3'
+import clapUrl    from '@/assets/sounds/clap.mp3'
+import wrongUrl   from '@/assets/sounds/wrong2.mp3'
+const sOK    = typeof Audio!=='undefined' ? new Audio(successUrl) : null
+const sClap  = typeof Audio!=='undefined' ? new Audio(clapUrl)    : null
+const sWrong = typeof Audio!=='undefined' ? new Audio(wrongUrl)   : null
+sOK&&(sOK.preload='auto'); sClap&&(sClap.preload='auto'); sWrong&&(sWrong.preload='auto')
+
+/* ---------- helpers ---------- */
+function rndInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+function shuffle(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]]} return x }
+
+/* ---------- Lo Shu base (sum 15) + symmetries ---------- */
+const LO_SHU = [[8,1,6],[3,5,7],[4,9,2]]
+function symmetries(mat){
+  const rot  = m => [[m[2][0],m[1][0],m[0][0]],[m[2][1],m[1][1],m[0][1]],[m[2][2],m[1][2],m[0][2]]]
+  const flip = m => m.map(r=>r.slice().reverse())
+  const s=[]; let m=mat
+  for(let i=0;i<4;i++){ s.push(m); s.push(flip(m)); m=rot(m) }
+  const seen=new Set(), out=[]
+  for(const k of s){ const t=JSON.stringify(k); if(!seen.has(t)){ out.push(k); seen.add(t) } }
+  return out
+}
+const SHAPES = symmetries(LO_SHU)
+
+/* ---------- state ---------- */
+const grid   = ref([[0,0,0],[0,0,0],[0,0,0]])  // final numbers
+const M      = ref(0)                          // magic sum
+const blanks = ref(new Set())                  // "r,c"
+const answerMap = ref({})                      // "r,c" -> value
+const bankCounts = ref({})                     // value -> count
+const solved = ref(false)
+const toast  = ref(null)
+
+const numDir = computed(()=>({direction:'ltr', unicodeBidi:'isolate'}))
+const keyOf = (r,c)=>`${r},${c}`
+
+/* ---------- build a generalized magic square: off + step*LoShu ---------- */
+function buildMagic(){
+  const shape = SHAPES[rndInt(0, SHAPES.length-1)]
+  const step  = [1,2,3,4,5][rndInt(0,4)]
+  const off   = rndInt(0,6)
+  const g = Array.from({length:3}, ()=> Array(3).fill(0))
+  for(let r=0;r<3;r++) for(let c=0;c<3;c++) g[r][c] = off + step*shape[r][c]
+  grid.value = g
+  M.value = step*15 + 3*off
+}
+
+/* ---------- choose blanks (leave 3–4 shown) ---------- */
+function pickBlanks(){
+  const all=[]; for(let r=0;r<3;r++) for(let c=0;c<3;c++) all.push([r,c])
+  const keep = new Set(shuffle(all).slice(0, rndInt(3,4)).map(([r,c])=>keyOf(r,c)))
+  const chosen = all.filter(([r,c])=>!keep.has(keyOf(r,c)))
+  blanks.value = new Set(chosen.map(([r,c])=>keyOf(r,c)))
+}
+
+/* ---------- bank with quantities ---------- */
+function rebuildBank(){
+  const counts={}
+  blanks.value.forEach(k=>{
+    const [r,c]=k.split(',').map(Number)
+    const v=grid.value[r][c]
+    counts[v]=(counts[v]||0)+1
+  })
+  for(const [k,v] of Object.entries(answerMap.value)){
+    counts[v]=(counts[v]||0)-1
+  }
+  for(const [v,ct] of Object.entries(counts)){ if(ct<=0) delete counts[v] }
+  bankCounts.value = counts
+}
+const bankList = computed(()=>{
+  const out=[]
+  for(const [v,ct] of Object.entries(bankCounts.value)) for(let i=0;i<ct;i++) out.push(Number(v))
+  return shuffle(out)
+})
+
+/* ---------- new puzzle ---------- */
+function newPuzzle(){
+  solved.value=false; toast.value=null; answerMap.value={}
+  buildMagic(); pickBlanks(); rebuildBank()
+}
+
+/* ---------- checks ---------- */
+function isFilled(){ for(const k of blanks.value){ if(answerMap.value[k]==null) return false } return true }
+function filledMatrix(){
+  const m = grid.value.map(r=>r.slice())
+  for(const k of blanks.value){ const [r,c]=k.split(',').map(Number); m[r][c]=answerMap.value[k] }
+  return m
+}
+function noDuplicates(m){
+  const seen=new Set()
+  for(const r of m) for(const v of r){ if(seen.has(v)) return false; seen.add(v) }
+  return true
+}
+function sumsOk(m){
+  const s=(a,b,c)=>a+b+c
+  for(let i=0;i<3;i++){
+    if(s(m[i][0],m[i][1],m[i][2])!==M.value) return false
+    if(s(m[0][i],m[1][i],m[2][i])!==M.value) return false
+  }
+  if(s(m[0][0],m[1][1],m[2][2])!==M.value) return false
+  if(s(m[0][2],m[1][1],m[2][0])!==M.value) return false
+  return true
+}
+
+async function addPoint(){ try{ await fetch('/api/method/mathematics_leaders.api.game_points.add_point?amount=1',{method:'GET',credentials:'include'}) }catch{} }
+async function checkNow(){
+  if(!isFilled()){ toast.value=L.value==='ar'?'أكمل كل الخانات':'Fill all blanks'; sWrong&&sWrong.play(); return }
+  const m = filledMatrix()
+  if(noDuplicates(m) && sumsOk(m)){ solved.value=true; toast.value=T[L.value].correct; sOK&&sOK.play(); sClap&&sClap.play(); await addPoint() }
+  else { toast.value=T[L.value].wrong; sWrong&&sWrong.play() }
+}
+function resetAll(){ answerMap.value={}; rebuildBank(); toast.value=null; solved.value=false }
+
+/* ---------- DnD ---------- */
+function onDragStart(ev,value){ ev.dataTransfer.setData('text/plain', String(value)) }
+function allowDrop(ev){ ev.preventDefault() }
+function onDrop(ev,key){
+  ev.preventDefault()
+  const v = Number(ev.dataTransfer.getData('text/plain'))
+  if(answerMap.value[key]!=null){
+    const old=answerMap.value[key]; bankCounts.value[old]=(bankCounts.value[old]||0)+1
+  }
+  if((bankCounts.value[v]||0)===0) return
+  bankCounts.value[v]-=1; answerMap.value[key]=v; toast.value=null
+}
+function clearCell(key){
+  if(answerMap.value[key]!=null){
+    const old=answerMap.value[key]; bankCounts.value[old]=(bankCounts.value[old]||0)+1
+    delete answerMap.value[key]
+  }
+}
+
+onMounted(newPuzzle)
+watch(()=>props.lang,()=>{})
+</script>
+
+<template>
+  <div class="lvl2c2 challenge-surface" :data-theme="props.theme">
+    <h2 class="title">{{ T[L].title }}</h2>
+    <p class="rule">{{ T[L].rule(M) }}</p>
+
+    <div class="board">
+      <div class="row" v-for="r in 3" :key="'r'+r">
+        <div class="cell" v-for="c in 3" :key="'c'+r+'-'+c">
+          <template v-if="!blanks.has(`${r-1},${c-1}`)">
+            <span class="num" :style="numDir">{{ grid[r-1][c-1] }}</span>
+          </template>
+          <template v-else>
+            <div class="dropzone" @dragover="allowDrop" @drop="onDrop($event, `${r-1},${c-1}`)">
+              <span v-if="answerMap[`${r-1},${c-1}`]!=null" class="num" :style="numDir">
+                {{ answerMap[`${r-1},${c-1}`] }}
+              </span>
+              <span v-else class="placeholder">؟</span>
+            </div>
+            <button class="clear" @click="clearCell(`${r-1},${c-1}`)"><Eraser class="ic" /> {{ T[L].clear }}</button>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="bank-title">{{ T[L].bank }}</div>
+      <div class="bank-items">
+        <button v-for="v in bankList" :key="v + '_' + Math.random()" class="chip"
+                draggable="true" @dragstart="onDragStart($event, v)" :style="numDir">
+          {{ v }}
+        </button>
+      </div>
+
+      <div class="actions">
+        <button class="btn" @click="resetAll"><RotateCcw class="ic" /> {{ T[L].reset }}</button>
+        <button class="btn primary" @click="checkNow"><Check class="ic" /> {{ T[L].check }}</button>
+        <button class="btn" @click="newPuzzle"><RefreshCw class="ic" /> {{ T[L].newQ }}</button>
+      </div>
+
+      <div v-if="toast" class="toast" :class="{ ok: solved }">{{ toast }}</div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+/* =========================
+   Contrast variables
+========================= */
+.lvl2c2{
+  --bg:#ffffff; --fg:#0b1220; --muted:#64748b;
+
+  --panel:#ffffff; --panel-bd:#cbd5e1; --panel-shadow:0 8px 24px rgba(2,6,23,.08);
+
+  --cell-bd:#cbd5e1; --cell-bg:rgba(99,102,241,.06);
+  --placeholder:#94a3b8;
+
+  --chip-bg:#ffffff; --chip-bd:#cbd5e1;
+
+  --btn-bg:#ffffff; --btn-bd:#cbd5e1; --btn-fg:#0b1220;
+  --btn-primary-bg:#0ea5e9; --btn-primary-fg:#ffffff;
+
+  --toast-err-bg:#fee2e2; --toast-err-fg:#991b1b; --toast-err-bd:#fecaca;
+  --toast-ok-bg:#dcfce7;  --toast-ok-fg:#166534;  --toast-ok-bd:#bbf7d0;
+
+  --ring:#38bdf8;
+}
+
+[data-theme="dark"] .lvl2c2{
+  --bg:#0b1220; --fg:#e5e7eb; --muted:#9ca3af;
+
+  --panel:#0f172a; --panel-bd:#334155; --panel-shadow:0 12px 28px rgba(0,0,0,.55);
+
+  --cell-bd:#475569; --cell-bg:rgba(148,163,184,.10);
+  --placeholder:#cbd5e1;
+
+  --chip-bg:#111827; --chip-bd:#475569;
+
+  --btn-bg:#111827; --btn-bd:#475569; --btn-fg:#e5e7eb;
+  --btn-primary-bg:#38bdf8; --btn-primary-fg:#0b1220;
+
+  --toast-err-bg:rgba(248,113,113,.18); --toast-err-fg:#fecaca; --toast-err-bd:rgba(248,113,113,.45);
+  --toast-ok-bg:rgba(34,197,94,.22);    --toast-ok-fg:#bbf7d0;  --toast-ok-bd:rgba(34,197,94,.5);
+}
+
+/* =========================
+   Layout
+========================= */
+.title{ font-weight:800; margin:0 0 .35rem; color:var(--fg) }
+.rule{ color:var(--muted); margin:0 0 1rem }
+
+.board{
+  display:inline-block; background:var(--panel);
+  padding:1rem; border-radius:16px;
+  border:1px solid var(--panel-bd);
+  box-shadow:var(--panel-shadow);
+}
+.row{ display:grid; grid-template-columns:repeat(3, 96px) }
+.cell{
+  min-height:88px; padding:.25rem;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.25rem;
+  border:1.5px dashed var(--cell-bd); border-radius:12px;
+}
+.num{ font-variant-numeric:tabular-nums; font-weight:800; font-size:1.25rem; color:var(--fg) }
+.placeholder{ color:var(--placeholder); font-size:1.25rem }
+.dropzone{
+  width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+  background:var(--cell-bg); border-radius:10px; transition:box-shadow .15s,border-color .15s
+}
+.dropzone:focus-within{ box-shadow:0 0 0 3px color-mix(in oklab, var(--ring) 35%, transparent) inset }
+
+.clear{
+  font-size:.78rem; border:none; background:transparent; color:var(--muted);
+  display:flex; align-items:center; gap:.25rem; cursor:pointer
+}
+.ic{ width:16px; height:16px }
+
+/* bank */
+.side{ margin-top:1rem; max-width:560px }
+.bank-title{ font-weight:700; color:var(--muted); margin:.25rem 0 }
+.bank-items{ display:flex; flex-wrap:wrap; gap:.5rem }
+.chip{
+  border:1px solid var(--chip-bd); background:var(--chip-bg); color:var(--fg);
+  padding:.45rem .65rem; border-radius:.8rem; cursor:grab; font-weight:800; min-width:48px;
+  transition:transform .1s, box-shadow .1s
+}
+.chip:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,0,0,.14) }
+
+/* actions & toasts */
+.actions{ display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.6rem }
+.btn{
+  display:inline-flex; align-items:center; gap:.45rem; padding:.55rem .85rem;
+  border-radius:.9rem; border:1px solid var(--btn-bd); background:var(--btn-bg); color:var(--btn-fg);
+  cursor:pointer; transition:transform .1s, box-shadow .1s
+}
+.btn:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,0,0,.14) }
+.btn.primary{ background:var(--btn-primary-bg); color:var(--btn-primary-fg); border-color:transparent }
+
+.toast{
+  margin-top:.55rem; padding:.6rem .9rem; border-radius:.9rem; font-weight:800; text-align:center;
+  background:var(--toast-err-bg); color:var(--toast-err-fg); border:1px solid var(--toast-err-bd)
+}
+.toast.ok{ background:var(--toast-ok-bg); color:var(--toast-ok-fg); border-color:var(--toast-ok-bd) }
 </style>
+
