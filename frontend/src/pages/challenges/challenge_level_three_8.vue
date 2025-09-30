@@ -1,355 +1,417 @@
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { Check, RotateCcw, RefreshCw, Eraser } from 'lucide-vue-next'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
+import { Check, RotateCcw, RefreshCw } from 'lucide-vue-next'
 
 const props = defineProps({ lang:{ type:String, default:'ar' }, theme:{ type:String, default:'light' } })
 
-/* i18n */
 const copy = {
   ar:{
-    title:'المستوى الثالث – التحدي 2: الأرقام المفقودة على البطاقات',
-    rule:'أمامك بطاقات ملوّنة بأرقام مفقودة. استخدم المعلومات المعطاة (المجموع، المتوسط، الوسيط، المدى) لتحديد الرقم المناسب لكل بطاقة، ثم اسحبه من لوحة الأعداد أو اكتبه يدويًا.',
-    bank:'لوحة الأعداد', newQ:'سؤال جديد', reset:'مسح', check:'تحقّق',
-    correct:'أحسنت! الأرقام صحيحة.', wrong:'تحقّق من القيم مرة أخرى.', clear:'تفريغ البطاقة',
-    hints:{ sum:'المجموع', mean:'المتوسط الحسابي', median:'الوسيط', range:'المدى' },
-    manualPlaceholder:'أدخل رقمًا'
+    title:'المستوى الثالث – التحدي 8: مسار الضرب',
+    intro:'ابدأ من النقطة أ ثم اختر نقاطًا متصلة للوصول إلى ب بحيث يكون حاصل ضرب الأرقام على الأضلاع مساويًا للقيمة المطلوبة.',
+    target:'القيمة المطلوبة', current:'الحاصل الحالي',
+    check:'تحقّق', reset:'مسح آخر نقطة', newQ:'تحدٍ جديد', clearAll:'إعادة المسار',
+    needStart:'ابدأ من النقطة أ.', invalid:'يجب اختيار نقطة متصلة.', wrong:'المسار لا يعطي القيمة المطلوبة، حاول مرة أخرى.', correct:'أحسنت! المسار يعطي القيمة المطلوبة.'
   },
   en:{
-    title:'Level 3 – Challenge 2: Missing numbers on the cards',
-    rule:'Each coloured card is missing its number. Use the given information (sum, mean, median, range) to deduce the correct value for every card, then drag a number from the bank or type it manually.',
-    bank:'Number bank', newQ:'New puzzle', reset:'Clear', check:'Check',
-    correct:'Great! All numbers are correct.', wrong:'Something is off – recheck the values.', clear:'Clear card',
-    hints:{ sum:'Sum', mean:'Mean', median:'Median', range:'Range' },
-    manualPlaceholder:'Type value'
+    title:'Level 3 – Challenge 8: Multiplication Path',
+    intro:'Start at point A and travel along connected nodes to reach B so the product of edge values equals the required target.',
+    target:'Target product', current:'Current product',
+    check:'Check', reset:'Undo last', newQ:'New challenge', clearAll:'Clear path',
+    needStart:'Start from node A.', invalid:'Pick a connected node.', wrong:'Path does not meet the target—try again.', correct:'Great! The path matches the target.'
   }
 }
 const L = computed(() => (copy[props.lang] ? props.lang : 'ar'))
-const locale = computed(() => (props.lang === 'ar' ? 'ar-EG' : 'en-US'))
-const numDir = computed(()=>({direction:'ltr', unicodeBidi:'isolate'}))
 
-/* sounds */
 import successUrl from '@/assets/sounds/success3.mp3'
 import clapUrl    from '@/assets/sounds/clap.mp3'
-import wrongUrl   from '@/assets/sounds/wrong2.mp3'
+import wrongUrl   from '@/assets/sounds/wrong3.mp3'
 const sOK    = typeof Audio!=='undefined' ? new Audio(successUrl) : null
 const sClap  = typeof Audio!=='undefined' ? new Audio(clapUrl)    : null
 const sWrong = typeof Audio!=='undefined' ? new Audio(wrongUrl)   : null
 sOK && (sOK.preload='auto'); sClap && (sClap.preload='auto'); sWrong && (sWrong.preload='auto')
 
-/* data */
-const colourPalette = ['green','gold','teal','magenta','sky','orange','crimson']
-const templates = [
-  { numbers:[4,8,12,16,20] },
-  { numbers:[5,9,11,13,22] },   // مجموع=60، متوسط=12، وسيط=11، مدى=17
-  { numbers:[7,10,12,18,23] },
-  { numbers:[6,8,15,19,22] },
-  { numbers:[9,11,14,20,26] }
+const puzzles = [
+  {
+    id:'p1',
+    target:5,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:90 },
+      { id:'RB', x:340, y:210 },
+      { id:'CT', x:260, y:70 },
+      { id:'C',  x:260, y:150 },
+      { id:'CB', x:260, y:230 },
+      { id:'LT', x:180, y:90 },
+      { id:'LB', x:180, y:210 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:0.5 },
+      { from:'RT', to:'CT', value:1.0 },
+      { from:'CT', to:'C', value:0.5 },
+      { from:'C', to:'LT', value:2.0 },
+      { from:'LT', to:'B', value:2.5 },
+      { from:'A', to:'RB', value:2.0 },
+      { from:'RB', to:'CB', value:1.25 },
+      { from:'CB', to:'C', value:1.0 },
+      { from:'C', to:'LB', value:1.0 },
+      { from:'LB', to:'B', value:2.0 },
+      { from:'CT', to:'CB', value:2.0 },
+      { from:'RT', to:'C', value:1.4 },
+      { from:'C', to:'LT', value:1.6 }
+    ]
+  },
+  {
+    id:'p2',
+    target:6,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:100 },
+      { id:'RB', x:340, y:200 },
+      { id:'CT', x:260, y:60 },
+      { id:'C',  x:260, y:150 },
+      { id:'CB', x:260, y:240 },
+      { id:'LT', x:180, y:100 },
+      { id:'LB', x:180, y:200 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.5 },
+      { from:'RT', to:'CT', value:2.0 },
+      { from:'CT', to:'C', value:1.0 },
+      { from:'C', to:'LT', value:1.0 },
+      { from:'LT', to:'B', value:2.0 },
+      { from:'A', to:'RB', value:0.5 },
+      { from:'RB', to:'CB', value:1.2 },
+      { from:'CB', to:'C', value:2.0 },
+      { from:'C', to:'LB', value:1.0 },
+      { from:'LB', to:'B', value:2.0 },
+      { from:'RT', to:'C', value:1.2 },
+      { from:'C', to:'LT', value:1.5 }
+    ]
+  },
+  {
+    id:'p3',
+    target:5.4,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:90 },
+      { id:'RB', x:340, y:210 },
+      { id:'CT', x:260, y:70 },
+      { id:'C',  x:260, y:150 },
+      { id:'CB', x:260, y:230 },
+      { id:'LT', x:180, y:90 },
+      { id:'LB', x:180, y:210 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.2 },
+      { from:'RT', to:'CT', value:1.5 },
+      { from:'CT', to:'C', value:1.0 },
+      { from:'C', to:'LT', value:1.5 },
+      { from:'LT', to:'B', value:2.0 },
+      { from:'A', to:'RB', value:1.4 },
+      { from:'RB', to:'CB', value:1.1 },
+      { from:'CB', to:'C', value:1.2 },
+      { from:'C', to:'LB', value:1.3 },
+      { from:'LB', to:'B', value:1.8 },
+      { from:'RT', to:'C', value:1.3 },
+      { from:'CT', to:'CB', value:1.4 }
+    ]
+  },
+  {
+    id:'p4',
+    target:4.5,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:110 },
+      { id:'RB', x:340, y:210 },
+      { id:'CT', x:260, y:90 },
+      { id:'C',  x:260, y:160 },
+      { id:'CB', x:260, y:240 },
+      { id:'LT', x:180, y:120 },
+      { id:'LB', x:180, y:210 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.1 },
+      { from:'RT', to:'CT', value:1.3 },
+      { from:'CT', to:'C', value:1.2 },
+      { from:'C', to:'LT', value:1.25 },
+      { from:'LT', to:'B', value:2.0 },
+      { from:'A', to:'RB', value:1.5 },
+      { from:'RB', to:'CB', value:1.2 },
+      { from:'CB', to:'C', value:1.0 },
+      { from:'C', to:'LB', value:1.4 },
+      { from:'LB', to:'B', value:1.8 },
+      { from:'RT', to:'C', value:1.4 },
+      { from:'CT', to:'CB', value:1.1 }
+    ]
+  },
+  {
+    id:'p5',
+    target:7.2,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:95 },
+      { id:'RB', x:340, y:205 },
+      { id:'CT', x:260, y:65 },
+      { id:'C',  x:260, y:150 },
+      { id:'CB', x:260, y:235 },
+      { id:'LT', x:180, y:105 },
+      { id:'LB', x:180, y:205 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.2 },
+      { from:'RT', to:'CT', value:1.5 },
+      { from:'CT', to:'C', value:1.0 },
+      { from:'C', to:'LT', value:1.2 },
+      { from:'LT', to:'B', value:1.6 },
+      { from:'A', to:'RB', value:0.9 },
+      { from:'RB', to:'CB', value:1.4 },
+      { from:'CB', to:'C', value:1.3 },
+      { from:'C', to:'LB', value:2.0 },
+      { from:'LB', to:'B', value:2.0 },
+      { from:'RT', to:'C', value:1.3 },
+      { from:'CT', to:'CB', value:1.2 }
+    ]
+  },
+  {
+    id:'p6',
+    target:4.8,
+    start:'A',
+    end:'B',
+    nodes:[
+      { id:'A', label:'أ', x:420, y:150, type:'start' },
+      { id:'B', label:'ب', x:80, y:150, type:'end' },
+      { id:'RT', x:340, y:105 },
+      { id:'RB', x:340, y:215 },
+      { id:'CT', x:260, y:75 },
+      { id:'C',  x:260, y:155 },
+      { id:'CB', x:260, y:235 },
+      { id:'LT', x:180, y:110 },
+      { id:'LB', x:180, y:215 }
+    ],
+    edges:[
+      { from:'A', to:'RT', value:1.3 },
+      { from:'RT', to:'CT', value:1.2 },
+      { from:'CT', to:'C', value:1.1 },
+      { from:'C', to:'LT', value:1.4 },
+      { from:'LT', to:'B', value:1.7 },
+      { from:'A', to:'RB', value:1.25 },
+      { from:'RB', to:'CB', value:1.2 },
+      { from:'CB', to:'C', value:1.0 },
+      { from:'C', to:'LB', value:1.6 },
+      { from:'LB', to:'B', value:2.0 },
+      { from:'RT', to:'C', value:1.2 },
+      { from:'CT', to:'CB', value:1.3 }
+    ]
+  }
 ]
-const EXTRA_CHOICES = 4
 
-function computeHints(numbers){
-  const sorted = numbers.slice().sort((a,b)=>a-b)
-  const sum = sorted.reduce((s,n)=>s+n,0)
-  const mean = sum / sorted.length
-  const median = sorted[Math.floor(sorted.length/2)]
-  const range = sorted.at(-1) - sorted[0]
-  return { sum, mean, median, range }
+function withCoords(edge, nodes){
+  const from = nodes.find(n => n.id === edge.from)
+  const to = nodes.find(n => n.id === edge.to)
+  return { ...edge, x1: from.x, y1: from.y, x2: to.x, y2: to.y, midX:(from.x+to.x)/2, midY:(from.y+to.y)/2 }
 }
 
-/* state */
-const cards = ref([])                 // [{id,color,value}]
-const solution = reactive({})         // id -> value
-const blanks = ref(new Set())         // ids
-const totalCounts = reactive({})      // solution value counts
-const extraCounts = reactive({})      // distractor counts
-const bankCounts  = reactive({})      // value -> remaining copies
-const answer = reactive({})           // id -> chosen value
-const answerSource = reactive({})     // 'bank' | 'manual'
-const manualDrafts = reactive({})     // id -> string
-const hints = ref({ sum:0, mean:0, median:0, range:0 })
-const toast = ref(null)
+const currentPuzzle = ref(puzzles[0])
+const lastPuzzleId = ref(null)
+const path = ref([]) // array of node ids
+const feedback = ref(null)
 const solved = ref(false)
 
-function resetReactiveMap(obj){ for (const k of Object.keys(obj)) delete obj[k] }
+const nodes = computed(() => currentPuzzle.value.nodes)
+const edges = computed(() => currentPuzzle.value.edges.map(e => withCoords(e, nodes.value)))
 
-/* puzzle builder */
-function buildPuzzle(){
-  const tpl = templates[Math.floor(Math.random()*templates.length)]
-  const nums = tpl.numbers.slice()
-  const colours = colourPalette.slice(0, nums.length).sort(()=>Math.random()-0.5)
-  const arrangement = nums.slice().sort(()=>Math.random()-0.5)
-
-  cards.value = []
-  blanks.value = new Set()
-  resetReactiveMap(solution); resetReactiveMap(answer); resetReactiveMap(answerSource)
-  resetReactiveMap(manualDrafts); resetReactiveMap(totalCounts)
-  resetReactiveMap(extraCounts);  resetReactiveMap(bankCounts)
-
-  arrangement.forEach((value, idx) => {
-    const id = `card-${idx}`
-    cards.value.push({ id, value, color: colours[idx % colours.length] })
-    solution[id] = value
-    blanks.value.add(id)
-    totalCounts[value] = (totalCounts[value] || 0) + 1
-  })
-  // bank starts with solution counts
-  for (const [val, ct] of Object.entries(totalCounts)) bankCounts[val] = ct
-
-  // add distractors without colliding with solutions
-  const minVal = Math.min(...nums)
-  const maxVal = Math.max(...nums)
-  const lower = Math.max(1, minVal - 12)
-  const upper = maxVal + 12
-  const extras = new Set()
-  while(extras.size < EXTRA_CHOICES){
-    const c = Math.floor(Math.random() * (upper - lower + 1)) + lower
-    if(totalCounts[c]) continue
-    extras.add(c)
+const selectedEdges = computed(() => {
+  const e = []
+  for(let i=0;i<path.value.length-1;i++){
+    const a = path.value[i]
+    const b = path.value[i+1]
+    const edge = edges.value.find(ed => (ed.from===a && ed.to===b) || (ed.from===b && ed.to===a))
+    if(edge) e.push(edge)
   }
-  extras.forEach(v => { extraCounts[v]=(extraCounts[v]||0)+1; bankCounts[v]=(bankCounts[v]||0)+1 })
+  return e
+})
 
-  hints.value = computeHints(nums)
-  toast.value = null; solved.value = false
+const product = computed(() => selectedEdges.value.reduce((acc, ed) => acc * ed.value, 1))
+
+function hasEdge(a,b){
+  return edges.value.some(ed => (ed.from===a && ed.to===b) || (ed.from===b && ed.to===a))
 }
 
-/* dnd */
-function onDragStart(ev, value){ ev.dataTransfer.setData('text/plain', String(value)) }
-function allowDrop(ev){ ev.preventDefault() }
-
-function setAnswer(cardId, value, source){
-  if(!Number.isFinite(value)) return false
-
-  // return previous bank item if needed
-  if(answer[cardId] != null && answerSource[cardId] === 'bank'){
-    const prev = answer[cardId]
-    bankCounts[prev] = (bankCounts[prev] || 0) + 1
+function pickNextPuzzle(){
+  if(puzzles.length === 1){
+    lastPuzzleId.value = puzzles[0].id
+    return puzzles[0]
   }
-
-  if(source === 'bank'){
-    if((bankCounts[value] || 0) <= 0) return false
-    bankCounts[value] = Math.max(0, (bankCounts[value] || 0) - 1)
-  }
-
-  answer[cardId] = value
-  answerSource[cardId] = source
-  manualDrafts[cardId] = String(value)
-  toast.value = null; solved.value = false
-  return true
+  let candidate
+  do{
+    candidate = puzzles[Math.floor(Math.random() * puzzles.length)]
+  }while(candidate.id === lastPuzzleId.value)
+  lastPuzzleId.value = candidate.id
+  return candidate
 }
 
-function onDrop(ev, cardId){
-  ev.preventDefault()
-  const val = Number(ev.dataTransfer.getData('text/plain'))
-  if(Number.isNaN(val)) return
-  setAnswer(cardId, val, 'bank')
+function resetPath(){
+  path.value = []
+  solved.value = false
+  feedback.value = null
 }
 
-function clearCard(cardId){
-  if(answer[cardId] != null && answerSource[cardId] === 'bank'){
-    const prev = answer[cardId]
-    bankCounts[prev] = (bankCounts[prev] || 0) + 1
+function undoLast(){
+  if(path.value.length > 0){
+    path.value = path.value.slice(0, -1)
+    solved.value = false
+    feedback.value = null
   }
-  delete answer[cardId]; delete answerSource[cardId]
-  manualDrafts[cardId] = ''
-  toast.value = null; solved.value = false
 }
-
-/* checking */
-function isFilled(){ for(const id of blanks.value){ if(answer[id]==null) return false } return true }
-function isCorrect(){ for(const id of blanks.value){ if(answer[id]!==solution[id]) return false } return true }
 
 async function addPoint(){
   try{ await fetch('/api/method/mathematics_leaders.api.game_points.add_point?amount=1',{method:'GET',credentials:'include'}) }catch{}
 }
-async function checkNow(){
-  if(!isFilled()){ toast.value = L.value==='ar' ? 'أكمل كل البطاقات أولاً.' : 'Fill every card first.'; sWrong&&sWrong.play(); return }
-  if(isCorrect()){ solved.value=true; toast.value=copy[L.value].correct; sOK&&sOK.play(); sClap&&sClap.play(); await addPoint() }
-  else{ toast.value=copy[L.value].wrong; sWrong&&sWrong.play() }
-}
 
-function resetAll(){
-  resetReactiveMap(answer); resetReactiveMap(answerSource); resetReactiveMap(manualDrafts)
-  resetReactiveMap(bankCounts)
-  for (const [v,ct] of Object.entries(totalCounts)) bankCounts[v]=ct
-  for (const [v,ct] of Object.entries(extraCounts)) bankCounts[v]=(bankCounts[v]||0)+ct
-  toast.value=null; solved.value=false
-}
-
-/* bank computed */
-const bankList = computed(()=>{
-  const arr=[]
-  for(const [v,ct] of Object.entries(bankCounts)){
-    for(let i=0;i<ct;i++) arr.push({ value:Number(v), key:`${v}-${i}` })
+function onNodeClick(node){
+  const { start, end } = currentPuzzle.value
+  if(!path.value.length){
+    if(node.id !== start){
+      feedback.value = copy[L.value].needStart
+      sWrong && sWrong.play()
+      return
+    }
+    path.value = [node.id]
+    feedback.value = null
+    return
   }
-  // stable order for UX
-  return arr.sort((a,b)=>a.value-b.value)
-})
-
-/* manual entry */
-function onManualInput(cardId, value){ manualDrafts[cardId] = value }
-function commitManual(cardId){
-  const raw = (manualDrafts[cardId] ?? '').trim()
-  if(raw===''){ clearCard(cardId); return }
-  const num = Number(raw)
-  if(!Number.isFinite(num)) return
-  setAnswer(cardId, num, 'manual')
+  const last = path.value[path.value.length-1]
+  if(node.id === last) return
+  if(!hasEdge(last, node.id)){
+    feedback.value = copy[L.value].invalid
+    sWrong && sWrong.play()
+    return
+  }
+  const newPath = path.value.slice()
+  newPath.push(node.id)
+  path.value = newPath
+  feedback.value = null
+  if(node.id === end){
+    checkPath()
+  }
 }
 
-/* numerals */
-const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
-function formatDigit(value){
-  const s = String(value)
-  return props.lang==='ar' ? s.replace(/[0-9]/g, d=>digitsMap[Number(d)]) : s
+async function checkPath(){
+  const { end, target } = currentPuzzle.value
+  if(path.value[path.value.length-1] !== end){
+    feedback.value = copy[L.value].wrong
+    sWrong && sWrong.play()
+    return
+  }
+  if(Math.abs(product.value - target) < 1e-6){
+    feedback.value = copy[L.value].correct
+    solved.value = true
+    sOK && sOK.play(); sClap && sClap.play()
+    await addPoint()
+  }else{
+    feedback.value = copy[L.value].wrong
+    solved.value = false
+    sWrong && sWrong.play()
+  }
 }
-function formatNumber(value, opts={}){ return new Intl.NumberFormat(locale.value, opts).format(value) }
 
-onMounted(buildPuzzle)
-watch(()=>props.lang, ()=>{ if(!solved.value) toast.value=null })
+function initPuzzle(){
+  const puzzle = pickNextPuzzle()
+  currentPuzzle.value = puzzle
+  resetPath()
+}
+
+onMounted(initPuzzle)
+watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
 </script>
 
 <template>
-  <div class="lvl3c2 challenge-surface" :data-theme="props.theme">
+  <div class="lvl3c8 challenge-surface" :data-theme="props.theme">
     <header class="head">
       <h2 class="title">{{ copy[L].title }}</h2>
-      <p class="rule">{{ copy[L].rule }}</p>
+      <p class="intro">{{ copy[L].intro }}</p>
     </header>
 
-    <section class="board">
-      <div class="cards">
-        <div v-for="card in cards" :key="card.id" class="card" :class="'color-' + card.color">
-          <div class="drop" @dragover="allowDrop" @drop="onDrop($event, card.id)">
-            <span v-if="answer[card.id] != null" class="num" :style="numDir">{{ formatDigit(answer[card.id]) }}</span>
-            <span v-else class="placeholder">؟</span>
-          </div>
-          <input
-            class="manual-entry" type="number" inputmode="numeric" :style="numDir"
-            :value="manualDrafts[card.id] ?? ''"
-            @input="onManualInput(card.id, $event.target.value)"
-            @change="commitManual(card.id)" @blur="commitManual(card.id)"
-            :placeholder="copy[L].manualPlaceholder"
-          />
-          <button class="clear" @click="clearCard(card.id)"><Eraser class="ic" /> {{ copy[L].clear }}</button>
-        </div>
-      </div>
-
-      <aside class="facts">
-        <h3>{{ props.lang==='ar' ? 'المعلومات المتاحة' : 'Given facts' }}</h3>
-        <ul>
-          <li><strong>{{ copy[L].hints.sum }}:</strong> <span :style="numDir">{{ formatNumber(hints.sum) }}</span></li>
-          <li><strong>{{ copy[L].hints.mean }}:</strong> <span :style="numDir">{{ formatNumber(hints.mean,{maximumFractionDigits:2}) }}</span></li>
-          <li><strong>{{ copy[L].hints.median }}:</strong> <span :style="numDir">{{ formatNumber(hints.median) }}</span></li>
-          <li><strong>{{ copy[L].hints.range }}:</strong> <span :style="numDir">{{ formatNumber(hints.range) }}</span></li>
-        </ul>
-      </aside>
+    <section class="status">
+      <div class="chip">{{ copy[L].target }}: <strong>{{ currentPuzzle.target }}</strong></div>
+      <div class="chip">{{ copy[L].current }}: <strong>{{ product.toFixed(3) }}</strong></div>
     </section>
 
-    <section class="bank">
-      <div class="bank-title">{{ copy[L].bank }}</div>
-      <div class="bank-items">
-        <button v-for="item in bankList" :key="item.key" class="chip"
-                draggable="true" @dragstart="onDragStart($event, item.value)" :style="numDir">
-          {{ formatDigit(item.value) }}
-        </button>
-      </div>
+    <section class="graph">
+      <svg viewBox="0 0 500 300">
+        <g v-for="edge in edges" :key="edge.from + edge.to">
+          <line :x1="edge.x1" :y1="edge.y1" :x2="edge.x2" :y2="edge.y2" :class="['edge', { active: selectedEdges.includes(edge) }]" />
+          <text :x="edge.midX" :y="edge.midY" class="edge-label">{{ edge.value }}</text>
+        </g>
+        <g v-for="node in nodes" :key="node.id" class="node" @click="onNodeClick(node)">
+          <circle :cx="node.x" :cy="node.y" :r="node.type ? 20 : 12" :class="['point', node.type, { selected: path.includes(node.id) }]" />
+          <text :x="node.x" :y="node.y + 4" class="node-label">{{ node.label || '' }}</text>
+        </g>
+      </svg>
     </section>
 
-    <section class="actions">
-      <button class="btn" @click="resetAll"><RotateCcw class="ic" /> {{ copy[L].reset }}</button>
-      <button class="btn" @click="checkNow"><Check class="ic" /> {{ copy[L].check }}</button>
-      <button class="btn" @click="buildPuzzle"><RefreshCw class="ic" /> {{ copy[L].newQ }}</button>
+    <section class="controls">
+      <button class="btn" @click="checkPath"><Check class="ic" /> {{ copy[L].check }}</button>
+      <button class="btn" @click="undoLast"><RotateCcw class="ic" /> {{ copy[L].reset }}</button>
+      <button class="btn" @click="resetPath"><RefreshCw class="ic" /> {{ copy[L].clearAll }}</button>
+      <button class="btn" @click="initPuzzle"><RefreshCw class="ic" /> {{ copy[L].newQ }}</button>
     </section>
 
     <transition name="fade">
-      <div v-if="toast" class="toast" :class="{ ok: solved }">{{ toast }}</div>
+      <div v-if="feedback" class="feedback" :class="{ ok: solved }">{{ feedback }}</div>
     </transition>
   </div>
 </template>
 
 <style scoped>
-.lvl3c2{ --fg:#172554; --bg:#f6f7ff; --panel:#ffffff; --bd:#cbd5f5; --accent:#d64c42;
-  color:var(--fg); background:var(--bg); padding:24px; border-radius:18px; box-shadow:0 12px 32px rgba(23,37,84,.08) }
-[data-theme="dark"] .lvl3c2{ --fg:#e0e7ff; --bg:#0b1220; --panel:#111a2b; --bd:#1e293b }
+.lvl3c8{ --fg:#111827; --bg:#f0f9ff; --panel:#ffffff; --bd:#bae6fd; --accent:#2563eb;
+  padding:24px; border-radius:18px; background:var(--bg); color:var(--fg); box-shadow:0 16px 36px rgba(37,99,235,.12) }
+[data-theme="dark"] .lvl3c8{ --fg:#e2e8f0; --bg:#0b1424; --panel:#12203b; --bd:#1d4ed8; --accent:#60a5fa }
 
-.head{ margin-bottom:18px }
-.title{ margin:0 0 8px; font-size:1.5rem; font-weight:700 }
-.rule{ margin:0; opacity:.75; line-height:1.5 }
+.head{ margin-bottom:20px }
+.title{ margin:0 0 10px; font-size:1.55rem; font-weight:700 }
+.intro{ margin:0; opacity:.85; line-height:1.55 }
 
-.board{ display:flex; flex-wrap:wrap; gap:24px; margin-bottom:24px }
-.cards{ display:flex; flex-wrap:wrap; gap:16px; flex:2 }
-.card{
-  width:170px; min-height:170px; border-radius:18px; padding:16px; border:2px solid transparent;
-  display:flex; flex-direction:column; gap:12px; background:var(--panel); box-shadow:0 10px 24px rgba(0,0,0,.08)
-}
-.drop{
-  width:100%; height:80px; border:2px dashed rgba(15,23,42,.25); border-radius:12px;
-  display:flex; align-items:center; justify-content:center; font-size:1.6rem; font-weight:700; color:var(--fg);
-  background:rgba(255,255,255,.55)
-}
-[data-theme="dark"] .drop{ background:rgba(15,23,42,.45); border-color:rgba(226,232,240,.25) }
-.drop:hover{ border-color:rgba(214,76,66,.45); box-shadow:0 0 0 4px rgba(214,76,66,.12) }
-.placeholder{ opacity:.45 }
-.num{ font-variant-numeric:tabular-nums }
+.status{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px }
+.chip{ padding:8px 14px; border-radius:999px; background:var(--panel); border:1px solid var(--bd); box-shadow:0 6px 16px rgba(15,23,42,.08); font-weight:600 }
+.chip strong{ font-weight:700 }
 
-.manual-entry{
-  width:100%; padding:.45rem .6rem; border-radius:.6rem; border:1px solid rgba(148,163,184,.35);
-  font-size:.95rem; background:rgba(255,255,255,.92); color:inherit
-}
-.manual-entry:focus{ outline:none; border-color:rgba(15,138,62,.45); box-shadow:0 0 0 3px rgba(15,138,62,.16) }
-[data-theme="dark"] .manual-entry{ background:rgba(15,23,42,.8); border-color:rgba(148,163,184,.4); color:var(--fg) }
+.graph{ background:var(--panel); border:1px solid var(--bd); border-radius:16px; padding:16px; box-shadow:0 12px 28px rgba(15,23,42,.12); margin-bottom:20px }
+svg{ width:100%; height:auto }
+.edge{ stroke:#3b82f6; stroke-width:4; stroke-linecap:round; opacity:.6; transition:.15s }
+.edge.active{ stroke:#2563eb; opacity:1 }
+.edge-label{ fill:var(--fg); font-size:12px; text-anchor:middle; dominant-baseline:middle; font-weight:600 }
+.node{ cursor:pointer }
+.point{ fill:#1d4ed8; stroke:#fff; stroke-width:2; transition:.15s }
+.point.start, .point.end{ fill:#fde68a; stroke:#fbbf24; stroke-width:3 }
+.point.selected{ stroke:var(--accent); stroke-width:4 }
+.node-label{ fill:var(--fg); font-weight:700; font-size:14px; text-anchor:middle }
 
-.clear{
-  display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
-  border:1px solid rgba(15,23,42,.15); background:rgba(255,255,255,.8); cursor:pointer; font-size:.8rem
-}
-[data-theme="dark"] .clear{ background:rgba(30,41,59,.6); border-color:rgba(148,163,184,.35) }
-.ic{ width:16px; height:16px }
+.controls{ display:flex; gap:12px; flex-wrap:wrap }
+.btn{ display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:12px; border:1px solid var(--bd); background:var(--panel); font-weight:700; cursor:pointer; transition:.15s }
+.btn:hover{ transform:translateY(-1px); box-shadow:0 12px 24px rgba(15,23,42,.12) }
+.ic{ width:18px; height:18px }
 
-.facts{
-  flex:1; min-width:220px; background:var(--panel); border-radius:16px; padding:18px; border:1px solid var(--bd);
-  box-shadow:0 8px 20px rgba(0,0,0,.05)
-}
-.facts h3{ margin:0 0 12px; font-size:1.05rem }
-.facts ul{ list-style:none; padding:0; margin:0; display:grid; gap:8px }
-.facts li{ display:flex; justify-content:space-between; gap:12px; font-variant-numeric:tabular-nums }
-
-.bank{ background:var(--panel); border-radius:16px; padding:18px; border:1px solid var(--bd); margin-bottom:20px }
-.bank-title{ font-weight:600; margin-bottom:12px }
-.bank-items{ display:flex; gap:10px; flex-wrap:wrap }
-.chip{
-  padding:8px 14px; border-radius:999px; border:1px solid var(--bd); background:#fff; cursor:grab; font-weight:600;
-  box-shadow:0 6px 16px rgba(15,23,42,.12)
-}
-[data-theme="dark"] .chip{ background:rgba(15,23,42,.6); border-color:rgba(148,163,184,.3) }
-.chip:active{ cursor:grabbing }
-
-.actions{ display:flex; flex-wrap:wrap; gap:12px }
-.btn{
-  display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:12px;
-  border:1px solid var(--bd); background:var(--panel); cursor:pointer; transition:.15s; font-weight:600
-}
-.btn:hover{ transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,.08) }
-
-.toast{
-  margin-top:18px; padding:12px 18px; border-radius:12px; border:1px solid #fecaca;
-  background:#fee2e2; color:#991b1b; font-weight:600; text-align:center
-}
-.toast.ok{ border-color:#bbf7d0; background:#dcfce7; color:#166534 }
+.feedback{ margin-top:18px; padding:12px 18px; border-radius:12px; border:1px solid #fecaca; background:#fee2e2; color:#b91c1c; font-weight:700; text-align:center }
+.feedback.ok{ border-color:#bbf7d0; background:#dcfce7; color:#166534 }
+[data-theme="dark"] .feedback{ background:rgba(248,113,113,.18); border-color:rgba(248,113,113,.45); color:#fecaca }
+[data-theme="dark"] .feedback.ok{ background:rgba(34,197,94,.22); border-color:rgba(34,197,94,.5); color:#bbf7d0 }
 
 .fade-enter-active,.fade-leave-active{ transition:opacity .2s }
 .fade-enter-from,.fade-leave-to{ opacity:0 }
-
-/* card colours */
-.color-green{ border-color:#4ade80; background:linear-gradient(160deg,#bbf7d0,#f0fff4) }
-.color-gold{ border-color:#facc15; background:linear-gradient(160deg,#fef08a,#fffbe6) }
-.color-teal{ border-color:#2dd4bf; background:linear-gradient(160deg,#99f6e4,#ecfeff) }
-.color-magenta{ border-color:#f472b6; background:linear-gradient(160deg,#fbcfe8,#fff0f8) }
-.color-sky{ border-color:#38bdf8; background:linear-gradient(160deg,#bae6fd,#eff6ff) }
-.color-orange{ border-color:#fb923c; background:linear-gradient(160deg,#ffd7aa,#fff7ed) }
-.color-crimson{ border-color:#f87171; background:linear-gradient(160deg,#fecaca,#fff1f1) }
-
-@media (max-width: 900px){
-  .board{ flex-direction:column }
-  .cards{ justify-content:center }
-  .card{ width:140px }
-}
 </style>
