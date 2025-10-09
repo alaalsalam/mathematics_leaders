@@ -10,18 +10,19 @@ const copy = {
     intro:'ابدأ من النقطة أ ثم اختر نقاطًا متصلة للوصول إلى ب بحيث يكون حاصل ضرب الأرقام على الأضلاع مساويًا للقيمة المطلوبة.',
     target:'القيمة المطلوبة', current:'الحاصل الحالي',
     check:'تحقّق', reset:'مسح آخر نقطة', newQ:'تحدٍ جديد', clearAll:'إعادة المسار',
-    needStart:'ابدأ من النقطة أ.', invalid:'يجب اختيار نقطة متصلة.', wrong:'المسار لا يعطي القيمة المطلوبة، حاول مرة أخرى.', correct:'أحسنت! المسار يعطي القيمة المطلوبة.'
+    needStart:'ابدأ من النقطة أ.', invalid:'يجب اختيار نقطة متصلة.', wrong:'المسار لا يعطي القيمة المطلوبة.', correct:'أحسنت! المسار يعطي القيمة المطلوبة.'
   },
   en:{
     title:'Level 3 – Challenge 7: Multiplication Path',
     intro:'Start at point A and travel along connected nodes to reach B so the product of edge values equals the required target.',
     target:'Target product', current:'Current product',
     check:'Check', reset:'Undo last', newQ:'New challenge', clearAll:'Clear path',
-    needStart:'Start from node A.', invalid:'Pick a connected node.', wrong:'Path does not meet the target—try again.', correct:'Great! The path matches the target.'
+    needStart:'Start from node A.', invalid:'Pick a connected node.', wrong:'Path does not meet the target.', correct:'Great! The path matches the target.'
   }
 }
 const L = computed(() => (copy[props.lang] ? props.lang : 'ar'))
 
+/* sounds */
 import successUrl from '@/assets/sounds/success3.mp3'
 import clapUrl    from '@/assets/sounds/clap.mp3'
 import wrongUrl   from '@/assets/sounds/wrong3.mp3'
@@ -30,205 +31,102 @@ const sClap  = typeof Audio!=='undefined' ? new Audio(clapUrl)    : null
 const sWrong = typeof Audio!=='undefined' ? new Audio(wrongUrl)   : null
 sOK && (sOK.preload='auto'); sClap && (sClap.preload='auto'); sWrong && (sWrong.preload='auto')
 
-const puzzles = [
-  {
-    id:'p1',
-    target:5,
-    start:'A',
-    end:'B',
-    nodes:[
-      { id:'A', label:'أ', x:420, y:150, type:'start' },
-      { id:'B', label:'ب', x:80, y:150, type:'end' },
-      { id:'RT', x:340, y:90 },
-      { id:'RB', x:340, y:210 },
-      { id:'CT', x:260, y:70 },
-      { id:'C',  x:260, y:150 },
-      { id:'CB', x:260, y:230 },
-      { id:'LT', x:180, y:90 },
-      { id:'LB', x:180, y:210 }
-    ],
-    edges:[
-      { from:'A', to:'RT', value:0.5 },
-      { from:'RT', to:'CT', value:1.0 },
-      { from:'CT', to:'C', value:0.5 },
-      { from:'C', to:'LT', value:2.0 },
-      { from:'LT', to:'B', value:2.5 },
-      { from:'A', to:'RB', value:2.0 },
-      { from:'RB', to:'CB', value:1.25 },
-      { from:'CB', to:'C', value:1.0 },
-      { from:'C', to:'LB', value:1.0 },
-      { from:'LB', to:'B', value:2.0 },
-      { from:'CT', to:'CB', value:2.0 },
-      { from:'RT', to:'C', value:1.4 },
-      { from:'C', to:'LT', value:1.6 }
-    ]
-  },
-  {
-    id:'p2',
-    target:6,
-    start:'A',
-    end:'B',
-    nodes:[
-      { id:'A', label:'أ', x:420, y:150, type:'start' },
-      { id:'B', label:'ب', x:80, y:150, type:'end' },
-      { id:'RT', x:340, y:100 },
-      { id:'RB', x:340, y:200 },
-      { id:'CT', x:260, y:60 },
-      { id:'C',  x:260, y:150 },
-      { id:'CB', x:260, y:240 },
-      { id:'LT', x:180, y:100 },
-      { id:'LB', x:180, y:200 }
-    ],
-    edges:[
-      { from:'A', to:'RT', value:1.5 },
-      { from:'RT', to:'CT', value:2.0 },
-      { from:'CT', to:'C', value:1.0 },
-      { from:'C', to:'LT', value:1.0 },
-      { from:'LT', to:'B', value:2.0 },
-      { from:'A', to:'RB', value:0.5 },
-      { from:'RB', to:'CB', value:1.2 },
-      { from:'CB', to:'C', value:2.0 },
-      { from:'C', to:'LB', value:1.0 },
-      { from:'LB', to:'B', value:2.0 },
-      { from:'RT', to:'C', value:1.2 },
-      { from:'C', to:'LT', value:1.5 }
-    ]
-  },
-  {
-    id:'p3',
-    target:5.4,
-    start:'A',
-    end:'B',
-    nodes:[
-      { id:'A', label:'أ', x:420, y:150, type:'start' },
-      { id:'B', label:'ب', x:80, y:150, type:'end' },
-      { id:'RT', x:340, y:90 },
-      { id:'RB', x:340, y:210 },
-      { id:'CT', x:260, y:70 },
-      { id:'C',  x:260, y:150 },
-      { id:'CB', x:260, y:230 },
-      { id:'LT', x:180, y:90 },
-      { id:'LB', x:180, y:210 }
-    ],
-    edges:[
-      { from:'A', to:'RT', value:1.2 },
-      { from:'RT', to:'CT', value:1.5 },
-      { from:'CT', to:'C', value:1.0 },
-      { from:'C', to:'LT', value:1.5 },
-      { from:'LT', to:'B', value:2.0 },
-      { from:'A', to:'RB', value:1.4 },
-      { from:'RB', to:'CB', value:1.1 },
-      { from:'CB', to:'C', value:1.2 },
-      { from:'C', to:'LB', value:1.3 },
-      { from:'LB', to:'B', value:1.8 },
-      { from:'RT', to:'C', value:1.3 },
-      { from:'CT', to:'CB', value:1.4 }
-    ]
-  },
-  {
-    id:'p4',
-    target:4.5,
-    start:'A',
-    end:'B',
-    nodes:[
-      { id:'A', label:'أ', x:420, y:150, type:'start' },
-      { id:'B', label:'ب', x:80, y:150, type:'end' },
-      { id:'RT', x:340, y:110 },
-      { id:'RB', x:340, y:210 },
-      { id:'CT', x:260, y:90 },
-      { id:'C',  x:260, y:160 },
-      { id:'CB', x:260, y:240 },
-      { id:'LT', x:180, y:120 },
-      { id:'LB', x:180, y:210 }
-    ],
-    edges:[
-      { from:'A', to:'RT', value:1.1 },
-      { from:'RT', to:'CT', value:1.3 },
-      { from:'CT', to:'C', value:1.2 },
-      { from:'C', to:'LT', value:1.25 },
-      { from:'LT', to:'B', value:2.0 },
-      { from:'A', to:'RB', value:1.5 },
-      { from:'RB', to:'CB', value:1.2 },
-      { from:'CB', to:'C', value:1.0 },
-      { from:'C', to:'LB', value:1.4 },
-      { from:'LB', to:'B', value:1.8 },
-      { from:'RT', to:'C', value:1.4 },
-      { from:'CT', to:'CB', value:1.1 }
-    ]
-  },
-  {
-    id:'p5',
-    target:7.2,
-    start:'A',
-    end:'B',
-    nodes:[
-      { id:'A', label:'أ', x:420, y:150, type:'start' },
-      { id:'B', label:'ب', x:80, y:150, type:'end' },
-      { id:'RT', x:340, y:95 },
-      { id:'RB', x:340, y:205 },
-      { id:'CT', x:260, y:65 },
-      { id:'C',  x:260, y:150 },
-      { id:'CB', x:260, y:235 },
-      { id:'LT', x:180, y:105 },
-      { id:'LB', x:180, y:205 }
-    ],
-    edges:[
-      { from:'A', to:'RT', value:1.2 },
-      { from:'RT', to:'CT', value:1.5 },
-      { from:'CT', to:'C', value:1.0 },
-      { from:'C', to:'LT', value:1.2 },
-      { from:'LT', to:'B', value:1.6 },
-      { from:'A', to:'RB', value:0.9 },
-      { from:'RB', to:'CB', value:1.4 },
-      { from:'CB', to:'C', value:1.3 },
-      { from:'C', to:'LB', value:2.0 },
-      { from:'LB', to:'B', value:2.0 },
-      { from:'RT', to:'C', value:1.3 },
-      { from:'CT', to:'CB', value:1.2 }
-    ]
-  },
-  {
-    id:'p6',
-    target:4.8,
-    start:'A',
-    end:'B',
-    nodes:[
-      { id:'A', label:'أ', x:420, y:150, type:'start' },
-      { id:'B', label:'ب', x:80, y:150, type:'end' },
-      { id:'RT', x:340, y:105 },
-      { id:'RB', x:340, y:215 },
-      { id:'CT', x:260, y:75 },
-      { id:'C',  x:260, y:155 },
-      { id:'CB', x:260, y:235 },
-      { id:'LT', x:180, y:110 },
-      { id:'LB', x:180, y:215 }
-    ],
-    edges:[
-      { from:'A', to:'RT', value:1.3 },
-      { from:'RT', to:'CT', value:1.2 },
-      { from:'CT', to:'C', value:1.1 },
-      { from:'C', to:'LT', value:1.4 },
-      { from:'LT', to:'B', value:1.7 },
-      { from:'A', to:'RB', value:1.25 },
-      { from:'RB', to:'CB', value:1.2 },
-      { from:'CB', to:'C', value:1.0 },
-      { from:'C', to:'LB', value:1.6 },
-      { from:'LB', to:'B', value:2.0 },
-      { from:'RT', to:'C', value:1.2 },
-      { from:'CT', to:'CB', value:1.3 }
-    ]
-  }
+/* ---------------- مولّد ألغاز كثيرة ---------------- */
+function rnd(a,b){ return Math.random()*(b-a)+a }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+function round2(x){ return Math.round(x*100)/100 }
+
+const baseNodes = [
+  { id:'A', label:'أ', x:420, y:150, type:'start' },
+  { id:'B', label:'ب', x:80,  y:150, type:'end'  },
+  { id:'RT', x:340, y:95 },
+  { id:'RB', x:340, y:205 },
+  { id:'CT', x:260, y:70 },
+  { id:'C',  x:260, y:150 },
+  { id:'CB', x:260, y:230 },
+  { id:'LT', x:180, y:100 },
+  { id:'LB', x:180, y:205 }
 ]
 
+// شبكة وصلات ثابتة كافية لتنوع المسارات
+const skeletonEdges = [
+  ['A','RT'],['A','RB'],
+  ['RT','CT'],['RT','C'],
+  ['CT','C'],['CT','CB'],
+  ['C','LT'],['C','LB'],['C','CB'],
+  ['LT','B'],['LB','B'],
+  ['RB','CB']
+]
+
+// أشكال مسارات صحيحة محتملة من A إلى B
+const pathShapes = [
+  ['A','RT','CT','C','LT','B'],
+  ['A','RT','C','LT','B'],
+  ['A','RB','CB','C','LB','B'],
+  ['A','RB','CB','C','LT','B'],
+  ['A','RT','CT','CB','C','LB','B']
+]
+
+// قيم الأوزان المحتملة
+const weightPool = [0.5,0.6,0.8,0.9,1.0,1.1,1.2,1.25,1.3,1.4,1.5,1.6,1.7,1.8,2.0]
+
+function genOnePuzzle(id){
+  const nodes = JSON.parse(JSON.stringify(baseNodes))
+  const path = pick(pathShapes)
+
+  // امنح أوزانًا لمسار الحل أولًا لتحكم بالهدف
+  const w = []
+  for(let i=0;i<path.length-1;i++){
+    w.push(pick(weightPool))
+  }
+  const target = round2(w.reduce((a,b)=>a*b,1))
+
+  // ابنِ جدول أوزان لكل ضلع
+  const weights = new Map()
+  for(let i=0;i<path.length-1;i++){
+    const a = path[i], b = path[i+1]
+    weights.set(`${a}-${b}`, w[i])
+    weights.set(`${b}-${a}`, w[i])
+  }
+  // بقية الأضلاع أوزان عشوائية
+  skeletonEdges.forEach(([u,v])=>{
+    if(!weights.has(`${u}-${v}`)){
+      const val = pick(weightPool)
+      weights.set(`${u}-${v}`, val)
+      weights.set(`${v}-${u}`, val)
+    }
+  })
+
+  // كوّن قائمة الأضلاع بالاتجاهين مرة واحدة
+  const edges = []
+  const seen = new Set()
+  skeletonEdges.forEach(([u,v])=>{
+    const k = `${u}|${v}`
+    if(seen.has(k)) return
+    seen.add(k)
+    edges.push({ from:u, to:v, value:weights.get(`${u}-${v}`) })
+  })
+
+  return { id, target, start:'A', end:'B', nodes, edges }
+}
+
+function generatePuzzles(n=40){
+  const arr=[]
+  for(let i=1;i<=n;i++) arr.push(genOnePuzzle('p'+i))
+  return arr
+}
+
+/* ---------------- حالة اللعبة ---------------- */
+const puzzles = ref(generatePuzzles(40))
 function withCoords(edge, nodes){
   const from = nodes.find(n => n.id === edge.from)
   const to = nodes.find(n => n.id === edge.to)
   return { ...edge, x1: from.x, y1: from.y, x2: to.x, y2: to.y, midX:(from.x+to.x)/2, midY:(from.y+to.y)/2 }
 }
 
-const currentPuzzle = ref(puzzles[0])
+const currentPuzzle = ref(puzzles.value[0])
 const lastPuzzleId = ref(null)
-const path = ref([]) // array of node ids
+const path = ref([]) // node ids
 const feedback = ref(null)
 const solved = ref(false)
 
@@ -238,14 +136,12 @@ const edges = computed(() => currentPuzzle.value.edges.map(e => withCoords(e, no
 const selectedEdges = computed(() => {
   const e = []
   for(let i=0;i<path.value.length-1;i++){
-    const a = path.value[i]
-    const b = path.value[i+1]
+    const a = path.value[i], b = path.value[i+1]
     const edge = edges.value.find(ed => (ed.from===a && ed.to===b) || (ed.from===b && ed.to===a))
     if(edge) e.push(edge)
   }
   return e
 })
-
 const product = computed(() => selectedEdges.value.reduce((acc, ed) => acc * ed.value, 1))
 
 function hasEdge(a,b){
@@ -253,88 +149,41 @@ function hasEdge(a,b){
 }
 
 function pickNextPuzzle(){
-  if(puzzles.length === 1){
-    lastPuzzleId.value = puzzles[0].id
-    return puzzles[0]
-  }
-  let candidate
-  do{
-    candidate = puzzles[Math.floor(Math.random() * puzzles.length)]
-  }while(candidate.id === lastPuzzleId.value)
-  lastPuzzleId.value = candidate.id
-  return candidate
+  const list = puzzles.value
+  if(list.length===1){ lastPuzzleId.value=list[0].id; return list[0] }
+  let c; do{ c=list[Math.floor(Math.random()*list.length)] }while(c.id===lastPuzzleId.value)
+  lastPuzzleId.value=c.id; return c
 }
 
-function resetPath(){
-  path.value = []
-  solved.value = false
-  feedback.value = null
-}
+function resetPath(){ path.value=[]; solved.value=false; feedback.value=null }
+function undoLast(){ if(path.value.length){ path.value = path.value.slice(0,-1); solved.value=false; feedback.value=null } }
 
-function undoLast(){
-  if(path.value.length > 0){
-    path.value = path.value.slice(0, -1)
-    solved.value = false
-    feedback.value = null
-  }
-}
-
-async function addPoint(){
-  try{ await fetch('/api/method/mathematics_leaders.api.game_points.add_point?amount=1',{method:'GET',credentials:'include'}) }catch{}
-}
+async function addPoint(){ try{ await fetch('/api/method/mathematics_leaders.api.game_points.add_point?amount=1',{method:'GET',credentials:'include'}) }catch{} }
 
 function onNodeClick(node){
   const { start, end } = currentPuzzle.value
   if(!path.value.length){
-    if(node.id !== start){
-      feedback.value = copy[L.value].needStart
-      sWrong && sWrong.play()
-      return
-    }
-    path.value = [node.id]
-    feedback.value = null
-    return
+    if(node.id !== start){ feedback.value = copy[L.value].needStart; sWrong&&sWrong.play(); return }
+    path.value=[node.id]; feedback.value=null; return
   }
   const last = path.value[path.value.length-1]
-  if(node.id === last) return
-  if(!hasEdge(last, node.id)){
-    feedback.value = copy[L.value].invalid
-    sWrong && sWrong.play()
-    return
-  }
-  const newPath = path.value.slice()
-  newPath.push(node.id)
-  path.value = newPath
-  feedback.value = null
-  if(node.id === end){
-    checkPath()
-  }
+  if(node.id===last) return
+  if(!hasEdge(last,node.id)){ feedback.value=copy[L.value].invalid; sWrong&&sWrong.play(); return }
+  path.value = path.value.concat(node.id); feedback.value=null
+  if(node.id===end) checkPath()
 }
 
 async function checkPath(){
   const { end, target } = currentPuzzle.value
-  if(path.value[path.value.length-1] !== end){
-    feedback.value = copy[L.value].wrong
-    sWrong && sWrong.play()
-    return
-  }
+  if(path.value[path.value.length-1] !== end){ feedback.value=copy[L.value].wrong; sWrong&&sWrong.play(); return }
   if(Math.abs(product.value - target) < 1e-6){
-    feedback.value = copy[L.value].correct
-    solved.value = true
-    sOK && sOK.play(); sClap && sClap.play()
-    await addPoint()
+    feedback.value=copy[L.value].correct; solved.value=true; sOK&&sOK.play(); sClap&&sClap.play(); await addPoint()
   }else{
-    feedback.value = copy[L.value].wrong
-    solved.value = false
-    sWrong && sWrong.play()
+    feedback.value=copy[L.value].wrong; solved.value=false; sWrong&&sWrong.play()
   }
 }
 
-function initPuzzle(){
-  const puzzle = pickNextPuzzle()
-  currentPuzzle.value = puzzle
-  resetPath()
-}
+function initPuzzle(){ currentPuzzle.value = pickNextPuzzle(); resetPath() }
 
 onMounted(initPuzzle)
 watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
@@ -381,7 +230,7 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
 <style scoped>
 .lvl3c8{ --fg:#111827; --bg:#f0f9ff; --panel:#ffffff; --bd:#bae6fd; --accent:#2563eb;
   padding:24px; border-radius:18px; background:var(--bg); color:var(--fg); box-shadow:0 16px 36px rgba(37,99,235,.12) }
-[data-theme="dark"] .lvl3c8{ --fg:#e2e8f0; --bg:#0b1424; --panel:#12203b; --bd:#1d4ed8; --accent:#60a5fa }
+[data-theme="dark"] .lvl3c8{ --fg:#e2e8f0; --bg:#0b1424; --panel:#12203b; --bd:#1d4ed8; --accent:#60a5فا }
 
 .head{ margin-bottom:20px }
 .title{ margin:0 0 10px; font-size:1.55rem; font-weight:700 }

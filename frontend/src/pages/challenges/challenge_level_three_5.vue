@@ -231,37 +231,73 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
 
     <section class="equation">
       <div class="fraction">
-        <div class="row">
+        <!-- <div class="row">
           <div v-for="key in slotTemplate.n1" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
             <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
-        </div>
-        <div class="bar"></div>
+        </div> -->
         <div class="row">
+  <template v-for="(key,i) in slotTemplate.n1" :key="key">
+    <div class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
+      <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
+      <span v-else class="placeholder">?</span>
+    </div>
+    <span v-if="i===0" class="sep-dot" aria-hidden="true"></span>
+  </template>
+</div>
+        <div class="bar"></div>
+        <!-- <div class="row">
           <div v-for="key in slotTemplate.d1" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
             <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
-        </div>
+        </div> -->
+        <div class="row">
+  <template v-for="(key,i) in slotTemplate.d1" :key="key">
+    <div class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
+      <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
+      <span v-else class="placeholder">?</span>
+    </div>
+    <span v-if="i===0" class="sep-dot" aria-hidden="true"></span>
+  </template>
+</div>
       </div>
 
       <span class="op">+</span>
 
       <div class="fraction">
-        <div class="row">
+        <!-- <div class="row">
           <div v-for="key in slotTemplate.n2" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
             <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
-        </div>
-        <div class="bar"></div>
+        </div> -->
         <div class="row">
+  <template v-for="(key,i) in slotTemplate.n2" :key="key">
+    <div class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
+      <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
+      <span v-else class="placeholder">?</span>
+    </div>
+    <span v-if="i===0" class="sep-dot" aria-hidden="true"></span>
+  </template>
+</div>
+        <div class="bar"></div>
+        <!-- <div class="row">
           <div v-for="key in slotTemplate.d2" :key="key" class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
             <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
             <span v-else class="placeholder">?</span>
           </div>
-        </div>
+        </div> -->
+        <div class="row">
+  <template v-for="(key,i) in slotTemplate.d2" :key="key">
+    <div class="slot" @dragover="allowDrop" @drop="onDrop($event, key)">
+      <span v-if="placements[key]" class="digit">{{ formatDigit(placements[key]) }}</span>
+      <span v-else class="placeholder">?</span>
+    </div>
+    <span v-if="i===0" class="sep-dot" aria-hidden="true"></span>
+  </template>
+</div>
       </div>
 
       <span class="op">=</span>
@@ -336,6 +372,14 @@ watch(() => props.lang, () => { if(!solved.value) feedback.value = null })
 
 .fade-enter-active,.fade-leave-active{ transition:opacity .2s }
 .fade-enter-from,.fade-leave-to{ opacity:0 }
+
+.sep-dot{
+  width:8px; height:8px; border-radius:50%;
+  background:#111; display:inline-block;
+  margin:0 6px; align-self:center;
+}
+[data-theme="dark"] .sep-dot{ background:#e5e7eb }
+
 
 @media(max-width: 720px){
   .fraction{ padding:10px 12px }

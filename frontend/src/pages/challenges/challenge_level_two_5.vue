@@ -1,13 +1,5 @@
 <script setup>
-/* =========================================================
-   Level 2 — Challenge 5: Fraction subtraction (dark-mode pass)
-   -----------------------------------------------------------
-   What changed (UI only):
-   - Strong theme tokens for light/dark (panels, borders, dividers).
-   - Higher-contrast fraction bars, dashed drops, and number chips.
-   - Numeric isolation + Arabic digits rendering kept and refined.
-   - Clear hover/focus states and subtle elevation on cards.
-========================================================= */
+
 
 import { ref, computed, onMounted } from 'vue'
 import { Check, RotateCcw, RefreshCw } from 'lucide-vue-next'
@@ -21,13 +13,13 @@ const props = defineProps({
 const T = {
   ar:{
     title:'المستوى الثاني – التحدي 5: أكمل طرح الكسور',
-    rule:(t)=>`ضع عددًا كليًا في كل مربع لتصبح المعادلة صحيحة:  ${t.num}/${t.den} =  ١/□  −  □/${t.d2}.  اسحب الرقمين من لوحة الأعداد.`,
+    rule:(t)=>`ضع عددًا كليًا في كل مربع لتصبح المعادلة صحيحة:  ${t.num}/${t.den} =  ١/□  −  □/${t.d2}.`,
     bank:'لوحة الأعداد', newQ:'سؤال جديد', reset:'إعادة تعيين', check:'تحقّق',
     correct:'إجابة صحيحة', wrong:'تحقق من القيم', clear:'تفريغ الخلية'
   },
   en:{
     title:'Level 2 – Challenge 5: Complete the fraction subtraction',
-    rule:(t)=>`Place integers to make the equation true:  ${t.num}/${t.den} =  1/□  −  □/${t.d2}.  Drag the two numbers from the bank.`,
+    rule:(t)=>`Place integers to make the equation true:  ${t.num}/${t.den} =  1/□  −  □/${t.d2}.`,
     bank:'Number bank', newQ:'New puzzle', reset:'Reset', check:'Check',
     correct:'Correct answer', wrong:'Check values', clear:'Clear'
   }
@@ -54,6 +46,7 @@ const answer = ref({ A:null, N:null })
 const toast  = ref(null)
 const solved = ref(false)
 
+/* جميع الألغاز تحقق:  num/den = 1/A − N/d2 */
 const puzzleBank = [
   { id:'p1',  target:{ num:1, den:6 },  d2:6,  solution:{ A:2, N:2 }, extras:[1,3,4,5,7,8] },
   { id:'p2',  target:{ num:1, den:6 },  d2:9,  solution:{ A:2, N:3 }, extras:[1,4,5,6,7,8] },
@@ -66,7 +59,19 @@ const puzzleBank = [
   { id:'p9',  target:{ num:3, den:9 },  d2:6,  solution:{ A:2, N:1 }, extras:[2,4,5,7,8,9] },
   { id:'p10', target:{ num:1, den:10 }, d2:5,  solution:{ A:2, N:2 }, extras:[1,3,4,6,7,8] },
   { id:'p11', target:{ num:2, den:10 }, d2:10, solution:{ A:2, N:3 }, extras:[1,4,5,6,7,9] },
-  { id:'p12', target:{ num:1, den:12 }, d2:4,  solution:{ A:3, N:1 }, extras:[2,5,6,7,8,9] }
+  { id:'p12', target:{ num:1, den:12 }, d2:4,  solution:{ A:3, N:1 }, extras:[2,5,6,7,8,9] },
+  { id:'p13', target:{ num:1, den:4 },  d2:8,  solution:{ A:2, N:2 }, extras:[1,3,4,5,6,7] },
+  { id:'p14', target:{ num:1, den:12 }, d2:12, solution:{ A:3, N:3 }, extras:[1,2,4,5,6,8] },
+  { id:'p15', target:{ num:2, den:9 },  d2:9,  solution:{ A:3, N:1 }, extras:[2,4,5,6,7,8] },
+  { id:'p16', target:{ num:1, den:5 },  d2:10, solution:{ A:2, N:3 }, extras:[1,2,4,5,6,7] },
+  { id:'p17', target:{ num:1, den:8 },  d2:8,  solution:{ A:2, N:3 }, extras:[1,2,4,5,6,7] },
+  { id:'p18', target:{ num:1, den:3 },  d2:6,  solution:{ A:2, N:1 }, extras:[3,4,5,7,8,9] },
+  { id:'p19', target:{ num:1, den:15 }, d2:15, solution:{ A:3, N:4 }, extras:[1,2,3,5,6,7] },
+  { id:'p20', target:{ num:2, den:15 }, d2:15, solution:{ A:3, N:3 }, extras:[1,2,4,5,6,7] },
+  { id:'p21', target:{ num:1, den:7 },  d2:14, solution:{ A:2, N:5 }, extras:[1,3,4,6,7,8] },
+  { id:'p22', target:{ num:3, den:10 }, d2:10, solution:{ A:2, N:2 }, extras:[1,3,4,5,6,7] },
+  { id:'p23', target:{ num:1, den:9 },  d2:9,  solution:{ A:3, N:2 }, extras:[1,4,5,6,7,8] },
+  { id:'p24', target:{ num:1, den:2 },  d2:4,  solution:{ A:1, N:2 }, extras:[3,4,5,6,7,8] }
 ]
 const currentPuzzle = ref(puzzleBank[0])
 const lastPuzzleId  = ref(null)
@@ -141,63 +146,32 @@ onMounted(newPuzzle)
     <h2 class="title">{{ T[L].title }}</h2>
     <p class="rule">{{ ruleText }}</p>
 
-    <!-- equation card -->
+    <!-- equation card: نفس الترتيب في اللغتين -->
     <div class="equation" :dir="L==='ar' ? 'rtl' : 'ltr'">
-      <!-- AR layout:  □/d2  −  1/□ -->
-      <template v-if="L==='ar'">
-        <div class="frac">
-          <div class="top">
-            <div class="drop" @dragover="allowDrop" @drop="dropTo('N',$event)">
-              <span v-if="answer.N!=null" class="num">{{ formatDigit(answer.N) }}</span>
-              <span v-else class="placeholder">□</span>
-            </div>
-          </div>
-          <div class="bar"></div>
-          <div class="bot">{{ formatDigit(target.d2) }}</div>
-        </div>
-
-        <span class="minus">−</span>
-
-        <div class="frac">
-          <div class="top">{{ formatDigit(1) }}</div>
-          <div class="bar"></div>
-          <div class="bot">
-            <div class="drop" @dragover="allowDrop" @drop="dropTo('A',$event)">
-              <span v-if="answer.A!=null" class="num">{{ formatDigit(answer.A) }}</span>
-              <span v-else class="placeholder">□</span>
-            </div>
+      <div class="frac">
+        <div class="top">{{ formatDigit(1) }}</div>
+        <div class="bar"></div>
+        <div class="bot">
+          <div class="drop" @dragover="allowDrop" @drop="dropTo('A',$event)">
+            <span v-if="answer.A!=null" class="num">{{ formatDigit(answer.A) }}</span>
+            <span v-else class="placeholder">□</span>
           </div>
         </div>
-      </template>
+      </div>
 
-      <!-- EN layout:  1/□ − □/d2 -->
-      <template v-else>
-        <div class="frac">
-          <div class="top">1</div>
-          <div class="bar"></div>
-          <div class="bot">
-            <div class="drop" @dragover="allowDrop" @drop="dropTo('A',$event)">
-              <span v-if="answer.A!=null" class="num">{{ formatDigit(answer.A) }}</span>
-              <span v-else class="placeholder">□</span>
-            </div>
+      <span class="minus">−</span>
+
+      <div class="frac">
+        <div class="top">
+          <div class="drop" @dragover="allowDrop" @drop="dropTo('N',$event)">
+            <span v-if="answer.N!=null" class="num">{{ formatDigit(answer.N) }}</span>
+            <span v-else class="placeholder">□</span>
           </div>
         </div>
+        <div class="bar"></div>
+        <div class="bot">{{ formatDigit(target.d2) }}</div>
+      </div>
 
-        <span class="minus">−</span>
-
-        <div class="frac">
-          <div class="top">
-            <div class="drop" @dragover="allowDrop" @drop="dropTo('N',$event)">
-              <span v-if="answer.N!=null" class="num">{{ formatDigit(answer.N) }}</span>
-              <span v-else class="placeholder">□</span>
-            </div>
-          </div>
-          <div class="bar"></div>
-          <div class="bot">{{ formatDigit(target.d2) }}</div>
-        </div>
-      </template>
-
-      <!-- fixed left side -->
       <span class="eq">=</span>
       <div class="frac">
         <div class="top">{{ formatDigit(target.num) }}</div>
@@ -256,7 +230,7 @@ onMounted(newPuzzle)
 
   --panel:#0f172a; --panel-bd:#334155; --panel-shadow:0 12px 28px rgba(0,0,0,.55);
 
-  --divider:#94a3b8;            /* lighter line for contrast */
+  --divider:#94a3b8;
   --drop-bg:rgba(99,102,241,.18);
   --drop-bd:#475569;
 

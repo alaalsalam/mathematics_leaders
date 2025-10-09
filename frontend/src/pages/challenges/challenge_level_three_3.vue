@@ -37,150 +37,60 @@ const sClap  = typeof Audio!=='undefined' ? new Audio(clapUrl)    : null
 const sWrong = typeof Audio!=='undefined' ? new Audio(wrongUrl)   : null
 sOK && (sOK.preload='auto'); sClap && (sClap.preload='auto'); sWrong && (sWrong.preload='auto')
 
-const puzzles = [
-  {
-    id: 'p1',
-    target: 10.0,
-    grid: [
-      [1.2, 0.8, 2.5, 1.3, 0.9],
-      [2.1, 3.4, 2.0, 0.6, 1.5],
-      [1.8, 2.2, 1.5, 3.0, 1.1],
-      [0.5, 1.6, 1.7, 2.0, 3.5],
-      [1.4, 1.3, 2.3, 1.8, 2.7],
-    ],
-    solution: [
-      { r:0, c:2 }, { r:1, c:2 }, { r:2, c:2 }, { r:3, c:2 }, { r:4, c:2 }
-    ],
-  },
-  {
-    id: 'p2',
-    target: 10.0,
-    grid: [
-      [0.8, 1.7, 2.1, 0.9, 1.4],
-      [2.6, 1.5, 1.9, 1.1, 2.9],
-      [1.3, 2.4, 1.2, 2.2, 1.6],
-      [0.7, 1.8, 2.5, 1.7, 2.3],
-      [1.9, 0.6, 1.8, 2.6, 0.9],
-    ],
-    solution: [
-      { r:1, c:0 }, { r:1, c:1 }, { r:1, c:2 }, { r:1, c:3 }, { r:1, c:4 }
-    ],
-  },
-  {
-    id: 'p3',
-    target: 10.0,
-    grid: [
-      [2.5, 1.1, 0.8, 1.4, 1.2],
-      [0.9, 2.0, 1.3, 1.7, 1.0],
-      [1.6, 1.2, 1.8, 1.1, 1.3],
-      [1.4, 1.9, 1.5, 1.5, 1.8],
-      [1.3, 1.4, 0.9, 1.6, 2.2],
-    ],
-    solution: [
-      { r:0, c:0 }, { r:1, c:1 }, { r:2, c:2 }, { r:3, c:3 }, { r:4, c:4 }
-    ],
-  },
-  {
-    id: 'p4',
-    target: 10.0,
-    grid: [
-      [1.1, 0.9, 1.7, 1.3, 2.1],
-      [2.0, 1.4, 2.0, 1.1, 1.6],
-      [1.5, 2.2, 1.8, 1.4, 1.3],
-      [0.8, 1.9, 2.3, 1.2, 1.1],
-      [1.6, 1.5, 2.2, 1.7, 0.9],
-    ],
-    solution: [
-      { r:0, c:2 }, { r:1, c:2 }, { r:2, c:2 }, { r:3, c:2 }, { r:4, c:2 }
-    ],
-  },
-  {
-    id: 'p5',
-    target: 10.2,
-    grid: [
-      [1.0, 1.3, 0.9, 1.5, 1.9],
-      [1.6, 1.2, 1.4, 1.8, 1.0],
-      [1.7, 1.1, 2.1, 1.4, 1.2],
-      [2.4, 2.0, 1.5, 1.3, 0.8],
-      [2.4, 1.5, 1.6, 1.1, 0.7],
-    ],
-    solution: [
-      { r:0, c:4 }, { r:1, c:3 }, { r:2, c:2 }, { r:3, c:1 }, { r:4, c:0 }
-    ],
-  },
-  {
-    id: 'p6',
-    target: 9.0,
-    grid: [
-      [1.8, 2.2, 1.6, 1.5, 1.9],
-      [1.3, 0.9, 2.1, 2.5, 1.1],
-      [1.4, 1.7, 1.2, 1.8, 1.6],
-      [1.0, 2.3, 1.5, 1.4, 2.2],
-      [1.6, 1.1, 2.0, 1.7, 0.8],
-    ],
-    solution: [
-      { r:0, c:0 }, { r:0, c:1 }, { r:0, c:2 }, { r:0, c:3 }, { r:0, c:4 }
-    ],
-  },
-  {
-    id: 'p7',
-    target: 9.3,
-    grid: [
-      [1.2, 1.5, 2.1, 1.0, 1.4],
-      [0.9, 2.0, 1.7, 1.9, 1.2],
-      [1.3, 1.8, 2.2, 1.6, 1.1],
-      [1.5, 1.9, 1.4, 1.7, 2.3],
-      [1.0, 2.1, 1.5, 1.2, 1.8],
-    ],
-    solution: [
-      { r:0, c:1 }, { r:1, c:1 }, { r:2, c:1 }, { r:3, c:1 }, { r:4, c:1 }
-    ],
-  },
-  {
-    id: 'p8',
-    target: 9.0,
-    grid: [
-      [1.4, 1.2, 2.0, 1.6, 0.9],
-      [1.1, 1.8, 1.4, 2.3, 1.5],
-      [2.2, 1.3, 1.7, 1.2, 1.1],
-      [1.5, 2.4, 1.6, 1.5, 1.9],
-      [2.0, 1.7, 1.5, 1.4, 2.6],
-    ],
-    solution: [
-      { r:0, c:0 }, { r:1, c:1 }, { r:2, c:2 }, { r:3, c:3 }, { r:4, c:4 }
-    ],
-  },
-  {
-    id: 'p9',
-    target: 10.0,
-    grid: [
-      [1.6, 1.0, 1.2, 1.9, 2.1],
-      [1.3, 1.5, 2.2, 1.8, 1.1],
-      [2.0, 1.8, 1.4, 1.5, 1.7],
-      [1.2, 2.3, 1.6, 1.7, 1.0],
-      [2.4, 1.9, 1.5, 1.2, 0.8],
-    ],
-    solution: [
-      { r:0, c:4 }, { r:1, c:3 }, { r:2, c:2 }, { r:3, c:1 }, { r:4, c:0 }
-    ],
-  },
-  {
-    id: 'p10',
-    target: 9.0,
-    grid: [
-      [1.0, 1.7, 1.3, 2.1, 1.6],
-      [1.5, 1.1, 2.4, 1.6, 1.8],
-      [1.9, 2.0, 1.5, 1.2, 1.3],
-      [1.4, 1.9, 1.7, 2.0, 1.1],
-      [2.1, 2.0, 1.8, 1.5, 1.6],
-    ],
-    solution: [
-      { r:4, c:0 }, { r:4, c:1 }, { r:4, c:2 }, { r:4, c:3 }, { r:4, c:4 }
-    ],
-  },
-]
+/* --------- helpers: 1-decimal numbers --------- */
+function r01(n){ return Math.round(n*10)/10 }
+function randDec(min=0.8,max=2.6){ return r01(min + Math.random()*(max-min)) }
 
-const currentPuzzle = ref(puzzles[0])
+/* --------- puzzle generator --------- */
+function genLineCells(type){
+  // returns array of {r,c} for 5 contiguous cells
+  const idx = Math.floor(Math.random()*5)
+  if(type==='row') return Array.from({length:5},(_,c)=>({r:idx,c}))
+  if(type==='col') return Array.from({length:5},(_,r)=>({r,c:idx}))
+  if(type==='diagMain') return Array.from({length:5},(_,i)=>({r:i,c:i}))
+  // diag anti
+  return Array.from({length:5},(_,i)=>({r:i,c:4-i}))
+}
+
+function makePuzzle(id){
+  const targetChoices = [9.0,9.3,9.6,9.9,10.0,10.2]  // تنويع أهداف
+  const target = targetChoices[Math.floor(Math.random()*targetChoices.length)]
+  const grid = Array.from({length:5},()=> Array.from({length:5},()=> randDec()))
+  const types = ['row','col','diagMain','diagAnti']
+  const type = types[Math.floor(Math.random()*types.length)]
+  const solution = genLineCells(type)
+
+  // اختر 4 قيم عشوائية للخط ثم احسب الخامسة لضبط المجموع
+  let chosen = solution.map(()=> randDec())
+  // اضبط الأربع الأولى واحتفظ بالخامسة للحساب
+  const sum4 = r01(chosen.slice(0,4).reduce((a,b)=>a+b,0))
+  let last = r01(target - sum4)
+
+  // حاول إبقاء الرقم ضمن حدود معقولة، وإلا أعد التوليد البسيط
+  let tries = 0
+  while((last < 0.5 || last > 3.0) && tries<20){
+    chosen = solution.map(()=> randDec())
+    const s4 = r01(chosen.slice(0,4).reduce((a,b)=>a+b,0))
+    last = r01(target - s4)
+    tries++
+  }
+  chosen[4] = r01(last)
+
+  // ضع القيم في الشبكة
+  solution.forEach((cell,i)=>{ grid[cell.r][cell.c] = chosen[i] })
+
+  return { id, target, grid, solution }
+}
+
+function generateMany(n=50){
+  const arr = []
+  for(let i=1;i<=n;i++) arr.push(makePuzzle('p'+i))
+  return arr
+}
+
+/* --------- state --------- */
+const puzzles = ref(generateMany(50))   // عدّل الرقم كما تريد
+const currentPuzzle = ref(puzzles.value[0])
 const lastPuzzleId = ref(null)
 const selected = ref(new Set())
 const solved = ref(false)
@@ -189,123 +99,62 @@ const feedback = ref(null)
 function coordKey(r,c){ return `${r},${c}` }
 
 function pickNextPuzzle(){
-  if(puzzles.length === 1){
-    lastPuzzleId.value = puzzles[0].id
-    return puzzles[0]
-  }
+  const list = puzzles.value
+  if(list.length===1){ lastPuzzleId.value = list[0].id; return list[0] }
   let candidate
-  do{
-    candidate = puzzles[Math.floor(Math.random() * puzzles.length)]
-  }while(candidate.id === lastPuzzleId.value)
+  do{ candidate = list[Math.floor(Math.random()*list.length)] }while(candidate.id===lastPuzzleId.value)
   lastPuzzleId.value = candidate.id
   return candidate
 }
 
-function resetSelection(){
-  selected.value = new Set()
-  solved.value = false
-  feedback.value = null
-}
-
-function pickPuzzle(){
-  const next = pickNextPuzzle()
-  currentPuzzle.value = next
-  resetSelection()
-}
+function resetSelection(){ selected.value=new Set(); solved.value=false; feedback.value=null }
+function pickPuzzle(){ currentPuzzle.value = pickNextPuzzle(); resetSelection() }
 
 function toggleCell(r,c){
   const key = coordKey(r,c)
   const set = new Set(selected.value)
-  if(set.has(key)) set.delete(key)
-  else set.add(key)
+  set.has(key) ? set.delete(key) : set.add(key)
   selected.value = set
   solved.value = false
   feedback.value = null
 }
 
-const selectedList = computed(()=> Array.from(selected.value).map(item => {
-  const [r,c] = item.split(',').map(Number)
-  return { r, c }
+const selectedList = computed(()=> Array.from(selected.value).map(s=>{
+  const [r,c] = s.split(',').map(Number); return {r,c}
 }))
-
-const selectedSum = computed(()=> selectedList.value.reduce((total, cell)=> total + currentPuzzle.value.grid[cell.r][cell.c], 0))
+const selectedSum = computed(()=> r01(selectedList.value.reduce((tot,cell)=> tot + currentPuzzle.value.grid[cell.r][cell.c], 0)))
 
 function isLine(cells){
-  if(cells.length < 2) return true
-  const rows = cells.map(c=>c.r)
-  const cols = cells.map(c=>c.c)
+  if(cells.length<2) return true
+  const rows = cells.map(c=>c.r), cols = cells.map(c=>c.c)
   const sameRow = rows.every(r=>r===rows[0])
   const sameCol = cols.every(c=>c===cols[0])
-  const diag1 = rows.every((r,idx)=> r - cols[idx] === rows[0] - cols[0])
-  const diag2 = rows.every((r,idx)=> r + cols[idx] === rows[0] + cols[0])
-
+  const diag1 = rows.every((r,i)=> r - cols[i] === rows[0] - cols[0])
+  const diag2 = rows.every((r,i)=> r + cols[i] === rows[0] + cols[0])
   if(!sameRow && !sameCol && !diag1 && !diag2) return false
-
   const sorted = [...cells]
-  if(sameRow){
-    sorted.sort((a,b)=> a.c - b.c)
-    for(let i=1;i<sorted.length;i++) if(sorted[i].c - sorted[i-1].c !== 1) return false
-    return true
-  }
-  if(sameCol){
-    sorted.sort((a,b)=> a.r - b.r)
-    for(let i=1;i<sorted.length;i++) if(sorted[i].r - sorted[i-1].r !== 1) return false
-    return true
-  }
-  if(diag1){
-    sorted.sort((a,b)=> a.r - b.r)
-    for(let i=1;i<sorted.length;i++){
-      if(sorted[i].r - sorted[i-1].r !== 1) return false
-      if(sorted[i].c - sorted[i-1].c !== 1) return false
-    }
-    return true
-  }
-  // diag2
-  sorted.sort((a,b)=> a.r - b.r)
-  for(let i=1;i<sorted.length;i++){
-    if(sorted[i].r - sorted[i-1].r !== 1) return false
-    if(sorted[i-1].c - sorted[i].c !== 1) return false
-  }
-  return true
+  if(sameRow){ sorted.sort((a,b)=>a.c-b.c); for(let i=1;i<sorted.length;i++) if(sorted[i].c-sorted[i-1].c!==1) return false; return true }
+  if(sameCol){ sorted.sort((a,b)=>a.r-b.r); for(let i=1;i<sorted.length;i++) if(sorted[i].r-sorted[i-1].r!==1) return false; return true }
+  if(diag1){ sorted.sort((a,b)=>a.r-b.r); for(let i=1;i<sorted.length;i++){ if(sorted[i].r-sorted[i-1].r!==1) return false; if(sorted[i].c-sorted[i-1].c!==1) return false } return true }
+  sorted.sort((a,b)=>a.r-b.r); for(let i=1;i<sorted.length;i++){ if(sorted[i].r-sorted[i-1].r!==1) return false; if(sorted[i-1].c-sorted[i].c!==1) return false } return true
 }
 
-async function addPoint(){
-  try{
-    await fetch('/api/method/mathematics_leaders.api.game_points.add_point?amount=1',{method:'GET',credentials:'include'})
-  }catch{}
-}
+async function addPoint(){ try{ await fetch('/api/method/mathematics_leaders.api.game_points.add_point?amount=1',{method:'GET',credentials:'include'}) }catch{} }
 
 async function checkLine(){
-  if(!selected.value.size){
-    feedback.value = copy[L.value].needSelection
-    sWrong && sWrong.play()
-    return
-  }
+  if(!selected.value.size){ feedback.value = copy[L.value].needSelection; sWrong&&sWrong.play(); return }
   const cells = selectedList.value
-  if(!isLine(cells)){
-    feedback.value = copy[L.value].wrongLine
-    sWrong && sWrong.play()
-    return
-  }
-  const sum = selectedSum.value
-  if(Math.abs(sum - currentPuzzle.value.target) > 1e-6){
-    feedback.value = copy[L.value].wrongSum
-    sWrong && sWrong.play()
-    return
-  }
+  if(!isLine(cells)){ feedback.value = copy[L.value].wrongLine; sWrong&&sWrong.play(); return }
+  if(Math.abs(selectedSum.value - currentPuzzle.value.target) > 1e-6){ feedback.value = copy[L.value].wrongSum; sWrong&&sWrong.play(); return }
   solved.value = true
   feedback.value = copy[L.value].correct
-  sOK && sOK.play(); sClap && sClap.play()
+  sOK&&sOK.play(); sClap&&sClap.play()
   await addPoint()
 }
 
-function isSolutionCell(r,c){
-  return currentPuzzle.value.solution.some(cell => cell.r===r && cell.c===c)
-}
+function isSolutionCell(r,c){ return currentPuzzle.value.solution.some(cell=>cell.r===r && cell.c===c) }
 
-onMounted(() => {
-  pickPuzzle()
-})
+onMounted(()=>{ pickPuzzle() })
 </script>
 
 <template>
@@ -321,11 +170,7 @@ onMounted(() => {
     </section>
 
     <section class="grid">
-      <div
-        v-for="(row,r) in currentPuzzle.grid"
-        :key="r"
-        class="row"
-      >
+      <div v-for="(row,r) in currentPuzzle.grid" :key="r" class="row">
         <button
           v-for="(value,c) in row"
           :key="c"

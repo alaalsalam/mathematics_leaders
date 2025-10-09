@@ -4,7 +4,7 @@ import { Check, RotateCcw, RefreshCw, Eraser } from 'lucide-vue-next'
 
 const props = defineProps({ lang:{type:String,default:'ar'}, theme:{type:String,default:'light'} })
 
-/* ===== copy ===== */
+/* ===== نصوص ===== */
 const copy = {
   ar:{
     title:'المستوى الثالث – التحدي 4: أزل النقطة الحمراء',
@@ -29,7 +29,7 @@ const copy = {
 }
 const L = computed(()=> (copy[props.lang]?props.lang:'ar'))
 
-/* ===== sounds ===== */
+/* ===== أصوات ===== */
 import successUrl from '@/assets/sounds/success2.mp3'
 import clapUrl    from '@/assets/sounds/clap.mp3'
 import wrongUrl   from '@/assets/sounds/wrong2.mp3'
@@ -38,10 +38,9 @@ const sClap  = typeof Audio!=='undefined' ? new Audio(clapUrl)    : null
 const sWrong = typeof Audio!=='undefined' ? new Audio(wrongUrl)   : null
 sOK && (sOK.preload='auto'); sClap && (sClap.preload='auto'); sWrong && (sWrong.preload='auto')
 
-/* ===== number formatting for Arabic clarity ===== */
+/* ===== تنسيق الأرقام والفواصل ===== */
 const digitsMap = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩']
-const LRI = '\u2066', PDI = '\u2069', NNBSP = '\u202F' // isolate + thin-space
-
+const LRI = '\u2066', PDI = '\u2069', NNBSP = '\u202F'
 function toArabicNumber(value, decimals){
   let s = typeof value === 'number'
     ? (decimals!=null ? value.toFixed(decimals) : String(value))
@@ -51,50 +50,52 @@ function toArabicNumber(value, decimals){
 }
 function formatDigit(value){
   const s = String(value)
-  return props.lang==='ar'
-    ? (LRI + s.replace(/[0-9]/g, d => digitsMap[+d]) + PDI)
-    : s
+  return props.lang==='ar' ? (LRI + s.replace(/[0-9]/g, d => digitsMap[+d]) + PDI) : s
 }
+/* فاصل عشري غير قابل للانعكاس */
+const sep = computed(()=> (props.lang==='ar' ? (LRI+'٫'+PDI) : '.'))
 
-/* ===== equation builders (single-digit slots only) ===== */
-/* token types in template:
-   - string: printed as-is
-   - {num:true,text:string}: numeric literal already formatted
-   - {slot:'name'}: droppable slot
+/* ===== مُنشئات المعادلات (الخانة دائماً بعد الفاصلة) ===== */
+/* رموز القالب:
+   - string: يظهر كما هو
+   - {num:true,text:string}: رقم مُنسَّق
+   - {slot:'name'}: خانة قابلة للإسقاط
 */
-function makeEqA({ multiplier, offset, aDigit, bDigit }){
+function makeEqA({ multiplier, aDigit, bDigit, offsetSuffix }){
+  //  multiplier × 0.a = b + (0.offsetSuffix)
   const multAr = toArabicNumber(multiplier, 1)
   const multEn = multiplier.toFixed(1)
-  const offStr = offset.toFixed(2)           
-  const offEnSuffix = offStr.slice(1)        
-  const offArSuffix = toArabicNumber(offEnSuffix)
+  const offSuffixEn = '.' + offsetSuffix.padStart(2,'0')      // مثل ".44"
+  const offSuffixAr = toArabicNumber(offSuffixEn)              // "٫٤٤"
   return {
     id:'eqA',
     slots:{ a:aDigit, b:bDigit },
     order:['a','b'],
     template:{
-      ar:['أ. ', {num:true,text:multAr}, ' × ', {num:true,text:'٠'}, '٫', {slot:'a'}, ' = ', {slot:'b'}, {num:true,text:offArSuffix}],
-      en:['A. ', {num:true,text:multEn}, ' × 0.', {slot:'a'}, ' = ', {slot:'b'}, offEnSuffix]
+      ar:['أ. ', {num:true,text:multAr}, ' × ', {num:true,text:'٠'}, sep.value, {slot:'a'}, ' = ', {slot:'b'}, {num:true,text:offSuffixAr}],
+      en:['A. ', {num:true,text:multEn}, ' × 0', sep.value, {slot:'a'}, ' = ', {slot:'b'}, offSuffixEn]
     },
     evaluate(v){
       const left  = multiplier * (v.a/10)
-      const right = v.b + offset
+      const right = v.b + Number(offSuffixEn)
       return Math.abs(left - right) < 1e-6
     }
   }
 }
-function makeEqB({ baseLeft, baseRight, cDigit, dDigit, result, decimals = 2 }){
+function makeEqB({ baseLeft, baseRight, cDigit, dDigit }){
+  //  (baseLeft.c) × (baseRight.d) = result
   const blAr = toArabicNumber(baseLeft,0), brAr = toArabicNumber(baseRight,0)
   const blEn = `${baseLeft}`, brEn = `${baseRight}`
-  const resEn = decimals!=null ? result.toFixed(decimals) : String(result)
+  const result = Number(((baseLeft + cDigit/10) * (baseRight + dDigit/10)).toFixed(2))
+  const resEn = result.toFixed(2)
   const resAr = toArabicNumber(resEn)
   return {
     id:'eqB',
     slots:{ c:cDigit, d:dDigit },
     order:['c','d'],
     template:{
-      ar:['ب. ', {num:true,text:blAr}, '٫', {slot:'c'}, ' × ', {num:true,text:brAr}, '٫', {slot:'d'}, ' = ', {num:true,text:resAr}],
-      en:['B. ', {num:true,text:blEn}, '.', {slot:'c'}, ' × ', {num:true,text:brEn}, '.', {slot:'d'}, ' = ', resEn]
+      ar:['ب. ', {num:true,text:blAr}, sep.value, {slot:'c'}, ' × ', {num:true,text:brAr}, sep.value, {slot:'d'}, ' = ', {num:true,text:resAr}],
+      en:['B. ', {num:true,text:blEn}, sep.value, {slot:'c'}, ' × ', {num:true,text:brEn}, sep.value, {slot:'d'}, ' = ', resEn]
     },
     evaluate(v){
       const left = (baseLeft + v.c/10) * (baseRight + v.d/10)
@@ -102,19 +103,18 @@ function makeEqB({ baseLeft, baseRight, cDigit, dDigit, result, decimals = 2 }){
     }
   }
 }
-function makeEqC({ secondBase, eDigit, fDigit, result, decimals = 2 }){
-  const sbAr = toArabicNumber(secondBase,0)
-  const sbEn = `${secondBase}`
-  const resEn = decimals!=null ? result.toFixed(decimals) : String(result)
-  const resAr = toArabicNumber(resEn)
+function makeEqC({ secondBase, eDigit, fDigit }){
+  //  (e.9) × (secondBase.f) = result
+  const sbAr = toArabicNumber(secondBase,0), sbEn = `${secondBase}`
+  const result = Number(((eDigit + 0.9) * (secondBase + fDigit/10)).toFixed(2))
+  const resEn = result.toFixed(2), resAr = toArabicNumber(resEn)
   return {
     id:'eqC',
     slots:{ e:eDigit, f:fDigit },
     order:['e','f'],
     template:{
-      // ar:['ج. ', {slot:'e'}, '٫', {num:true,text:toArabicNumber(9,0).slice(1,-1)}, ' × ', {num:true,text:sbAr}, '٫', {slot:'f'}, ' = ', {num:true,text:resAr}],
-      ar:['ج. ', {slot:'e'}, '٫', {num:true,text:toArabicNumber(9,0)}, ' × ', {num:true,text:sbAr}, '٫', {slot:'f'}, ' = ', {num:true,text:resAr}],
-      en:['C. ', {slot:'e'}, '.9 × ', {num:true,text:sbEn}, '.', {slot:'f'}, ' = ', resEn]
+      ar:['ج. ', {slot:'e'}, sep.value, {num:true,text:toArabicNumber(9,0)}, ' × ', {num:true,text:sbAr}, sep.value, {slot:'f'}, ' = ', {num:true,text:resAr}],
+      en:['C. ', {slot:'e'}, sep.value, '9 × ', {num:true,text:sbEn}, sep.value, {slot:'f'}, ' = ', resEn]
     },
     evaluate(v){
       const left = (v.e + 0.9) * (secondBase + v.f/10)
@@ -122,14 +122,16 @@ function makeEqC({ secondBase, eDigit, fDigit, result, decimals = 2 }){
     }
   }
 }
-function makeEqD({ gDigit, hDigit }){
+function makeEqD({ gDigit }){
+  //  4.g + 1.25 = 5.h5  =>  h = g + 2
+  const hDigit = gDigit + 2
   return {
     id:'eqD',
     slots:{ g:gDigit, h:hDigit },
     order:['g','h'],
     template:{
-      ar:['د. ', {num:true,text:'٤'}, '٫', {slot:'g'}, ' + ', {num:true,text:'١٫٢٥'}, ' = ', {num:true,text:'٥'}, '٫', {slot:'h'}, {num:true,text:'٥'}],
-      en:['D. 4.', {slot:'g'}, ' + 1.25 = 5.', {slot:'h'}, '5']
+      ar:['د. ', {num:true,text:'٤'}, sep.value, {slot:'g'}, ' + ', {num:true,text:'١'+sep.value+'٢٥'}, ' = ', {num:true,text:'٥'}, sep.value, {slot:'h'}, {num:true,text:'٥'}],
+      en:['D. 4', sep.value, {slot:'g'}, ' + 1', sep.value, '25 = 5', sep.value, {slot:'h'}, '5']
     },
     evaluate(v){
       const left  = (4 + v.g/10) + 1.25
@@ -139,57 +141,53 @@ function makeEqD({ gDigit, hDigit }){
   }
 }
 
-/* ===== fixed puzzle bank (all slots are correct single digits) ===== */
-const puzzleBank = [
-  {
-    id:'p1',
+/* ===== توليد بنك نماذج كبير ===== */
+function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+function genPuzzle(id){
+  // Eq A: اختر a,b والمضاعف ثم اضبط لاحقة الكسر
+  let a = randInt(1,9), b = randInt(0,9), multiplier = pick([6.4,6.8,7.2,7.6,8.2,8.6,9.0,9.3])
+  let off = +(multiplier*(a/10) - b).toFixed(2)
+  // إجبار ضمن [0,0.99]
+  let tries=0
+  while((off<0 || off>=1) && tries<40){
+    a = randInt(1,9); b = randInt(0,9); multiplier = pick([6.4,6.8,7.2,7.6,8.2,8.6,9.0,9.3])
+    off = +(multiplier*(a/10) - b).toFixed(2)
+    tries++
+  }
+  const offSuffix = String(off.toFixed(2)).split('.')[1] // "44"
+
+  // Eq B
+  const c = randInt(0,9), d = randInt(0,9)
+  const baseLeft = pick([2,3,4]), baseRight = pick([2,3,4])
+
+  // Eq C
+  const e = randInt(1,8), f = randInt(0,9)
+  const secondBase = pick([2,3,4])
+
+  // Eq D: اختر g<=7
+  const g = randInt(0,7)
+
+  return {
+    id,
     equations:[
-      makeEqA({ multiplier:9.3, offset:0.44, aDigit:8, bDigit:7 }),
-      makeEqB({ baseLeft:2, baseRight:2, cDigit:4, dDigit:9, result:6.96, decimals:2 }),
-      makeEqC({ secondBase:3, eDigit:4, fDigit:7, result:18.13, decimals:2 }),
-      makeEqD({ gDigit:7, hDigit:9 })
-    ]
-  },
-  {
-    id:'p2',
-    equations:[
-      makeEqA({ multiplier:8.6, offset:0.16, aDigit:6, bDigit:5 }),
-      makeEqB({ baseLeft:2, baseRight:2, cDigit:1, dDigit:6, result:5.46, decimals:2 }),
-      makeEqC({ secondBase:3, eDigit:2, fDigit:5, result:10.15, decimals:2 }),
-      makeEqD({ gDigit:3, hDigit:5 })
-    ]
-  },
-  {
-    id:'p3',
-    equations:[
-      makeEqA({ multiplier:7.8, offset:0.24, aDigit:8, bDigit:6 }),
-      makeEqB({ baseLeft:2, baseRight:2, cDigit:5, dDigit:2, result:5.50, decimals:2 }),
-      makeEqC({ secondBase:3, eDigit:3, fDigit:6, result:14.04, decimals:2 }),
-      makeEqD({ gDigit:2, hDigit:4 })
-    ]
-  },
-  {
-    id:'p4',
-    equations:[
-      makeEqA({ multiplier:6.4, offset:0.28, aDigit:2, bDigit:1 }),
-      makeEqB({ baseLeft:2, baseRight:2, cDigit:8, dDigit:3, result:6.44, decimals:2 }),
-      makeEqC({ secondBase:3, eDigit:5, fDigit:2, result:18.88, decimals:2 }),
-      makeEqD({ gDigit:4, hDigit:6 })
-    ]
-  },
-  {
-    id:'p5',
-    equations:[
-      makeEqA({ multiplier:6.4, offset:0.12, aDigit:8, bDigit:5 }),
-      makeEqB({ baseLeft:2, baseRight:2, cDigit:0, dDigit:9, result:5.80, decimals:2 }),
-      makeEqC({ secondBase:3, eDigit:6, fDigit:1, result:21.39, decimals:2 }),
-      makeEqD({ gDigit:1, hDigit:3 })
+      makeEqA({ multiplier, aDigit:a, bDigit:b, offsetSuffix:offSuffix }),
+      makeEqB({ baseLeft, baseRight, cDigit:c, dDigit:d }),
+      makeEqC({ secondBase, eDigit:e, fDigit:f }),
+      makeEqD({ gDigit:g })
     ]
   }
-]
+}
+function generateBank(n=40){
+  const arr=[]
+  for(let i=1;i<=n;i++) arr.push(genPuzzle('p'+i))
+  return arr
+}
 
-/* ===== state ===== */
-const currentPuzzle = ref(puzzleBank[0])
+/* ===== الحالة ===== */
+const puzzleBank = ref(generateBank(40))
+const currentPuzzle = ref(puzzleBank.value[0])
 const lastPuzzleId = ref(null)
 const answers = reactive({})
 const totalCounts = reactive({})
@@ -198,22 +196,20 @@ const slotsMeta = ref([])
 const feedback = ref(null)
 const solved = ref(false)
 
-/* ===== helpers ===== */
+/* ===== أدوات ===== */
 function shuffle(a){ return a.slice().sort(()=>Math.random()-0.5) }
 function pickNextPuzzle(){
-  if(puzzleBank.length===1){ lastPuzzleId.value=puzzleBank[0].id; return puzzleBank[0] }
-  let c
-  do{ c = puzzleBank[Math.floor(Math.random()*puzzleBank.length)] }while(c.id===lastPuzzleId.value)
-  lastPuzzleId.value = c.id
-  return c
+  const list = puzzleBank.value
+  if(list.length===1){ lastPuzzleId.value=list[0].id; return list[0] }
+  let c; do{ c=list[Math.floor(Math.random()*list.length)] }while(c.id===lastPuzzleId.value)
+  lastPuzzleId.value=c.id; return c
 }
 
-/* ===== init puzzle, bank = exact correct digits ===== */
+/* ===== تهيئة اللغز (بنك الأرقام = الأرقام الصحيحة تمامًا) ===== */
 function initPuzzle(){
   const puzzle = pickNextPuzzle()
   currentPuzzle.value = puzzle
-  feedback.value = null
-  solved.value = false
+  feedback.value = null; solved.value = false
 
   Object.keys(answers).forEach(k=>delete answers[k])
   Object.keys(totalCounts).forEach(k=>delete totalCounts[k])
@@ -233,7 +229,7 @@ function initPuzzle(){
   slotsMeta.value = meta
 }
 
-/* ===== DnD ===== */
+/* ===== سحب وإفلات ===== */
 function allowDrop(ev){ ev.preventDefault() }
 function onDragStart(ev, value){ ev.dataTransfer.setData('text/plain', String(value)) }
 function onDrop(ev, key){
@@ -243,14 +239,13 @@ function onDrop(ev, key){
   if((bankCounts[val]||0) <= 0 && answers[key] !== val) return
 
   if(answers[key]!=null){
-     const prev=answers[key];
+    const prev=answers[key]
     bankCounts[prev]=(bankCounts[prev]||0)+1
-   }
-  if(answers[key] !== val){
-    bankCounts[val] = (bankCounts[val] || 0) - 1;
-    if (bankCounts[val] < 0) bankCounts[val] = 0;
   }
-
+  if(answers[key] !== val){
+    bankCounts[val] = (bankCounts[val] || 0) - 1
+    if (bankCounts[val] < 0) bankCounts[val] = 0
+  }
   answers[key]=val; feedback.value=null; solved.value=false
 }
 function clearSlot(key){
@@ -267,7 +262,7 @@ const bankList = computed(()=>{
   return shuffle(list)
 })
 
-/* ===== check ===== */
+/* ===== فحص ===== */
 function allFilled(){ return slotsMeta.value.every(s=>answers[s.key]!=null) }
 async function addPoint(){ try{ await fetch('/api/method/mathematics_leaders.api.game_points.add_point?amount=1',{method:'GET',credentials:'include'}) }catch{} }
 async function checkAll(){
@@ -285,7 +280,7 @@ function resetAll(){
   feedback.value=null; solved.value=false
 }
 
-/* ===== lifecycle ===== */
+/* ===== دورة الحياة ===== */
 onMounted(initPuzzle)
 watch(()=>props.lang, ()=>{ if(!solved.value) feedback.value=null })
 </script>
@@ -299,18 +294,19 @@ watch(()=>props.lang, ()=>{ if(!solved.value) feedback.value=null })
 
     <section class="equations">
       <div v-for="eq in currentPuzzle.equations" :key="eq.id" class="card">
-        <div class="expression">
+        <div class="expression" :dir="L==='ar' ? 'rtl' : 'ltr'">
           <span
             v-for="(token, idx) in (props.lang==='ar' ? eq.template.ar : eq.template.en)"
             :key="idx"
           >
             <template v-if="typeof token==='string'">
-              {{ token }}
+              <span class="txt">{{ token }}</span>
             </template>
             <template v-else-if="token.num">
               <span class="num" v-html="token.text"></span>
             </template>
             <template v-else>
+              <!-- خانة بعد الفاصلة دائماً -->
               <span class="slot" @dragover="allowDrop" @drop="onDrop($event, eq.id + '-' + token.slot)">
                 <span v-if="answers[eq.id + '-' + token.slot] != null" class="digit" v-html="formatDigit(answers[eq.id + '-' + token.slot])"></span>
                 <span v-else class="placeholder">●</span>
@@ -360,9 +356,9 @@ watch(()=>props.lang, ()=>{ if(!solved.value) feedback.value=null })
 .equations{ display:grid; gap:18px }
 .card{ background:var(--panel); border:1px solid var(--bd); border-radius:16px; padding:16px 18px; box-shadow:0 12px 24px rgba(17,24,39,.08) }
 .expression{
-  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
-  font-size:1.15rem; font-weight:600; direction: rtl;
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px; font-size:1.15rem; font-weight:600;
 }
+.txt{ direction:inherit }
 .num,.digit{ direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums }
 .slot{
   min-width:36px; min-height:36px; border-radius:12px; border:2px dashed rgba(239,68,68,.45);
